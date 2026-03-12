@@ -5,6 +5,7 @@ import { use } from "react";
 const userSchema = new mongoose.Schema({
     avatar:{
         type: String,
+        public_id: String,
         required: true,
     },
     coverImage:{
