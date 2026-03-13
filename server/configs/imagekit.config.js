@@ -14,7 +14,7 @@ This is similar to a singleton pattern.*/
   }
 }
 
-const magekit = ImageKitConfig.initialize();
+const imagekit = ImageKitConfig.initialize();
 export default imagekit;
 
 /*
