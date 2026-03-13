@@ -1,5 +1,5 @@
 import express from 'express';
-import multer from 'multer';
+import morgan from 'morgan';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 const app = express();
@@ -16,7 +16,7 @@ app.use(cors({
 
 app.use(express.json({limit: "32kb"}));
 app.use(express.urlencoded({ extended: true }));
-app.use(multer);
+app.use(morgan("dev")); // logs requests
 app.use(cookieParser());
 
 //routes import
