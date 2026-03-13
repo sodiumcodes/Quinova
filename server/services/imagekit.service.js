@@ -1,4 +1,4 @@
-import imagekit from "../config/imagekit.config.js";
+import imagekit from "../configs/imagekit.config.js";
 class ImageKitService {
 //This function uploads image to ImageKit
 static async uploadImage(fileBuffer, fileName, folder) {

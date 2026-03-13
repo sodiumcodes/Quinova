@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import 'colors';
 import app from "./app.js";
-import imagekit from "./config/imagekit.config.js";
+import imagekit from "./configs/imagekit.config.js";
 import Connection from './configs/db.js';
 import mongoose from 'mongoose';
 let server;

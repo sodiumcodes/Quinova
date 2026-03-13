@@ -2,7 +2,6 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import UserRoute from './routes/user.route';
 const app = express();
 //app.use() -> for middlewares and config 
 /*
@@ -20,6 +19,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(multer);
 app.use(cookieParser());
 
-app.use('/user', UserRoute)
+//routes import
+import UserRoute from './routes/user.route.js';
+import authRouter from './routes/auth.route.js';
 
+//routes declaration
+app.use('/user', UserRoute)
+app.use('/api/v1/auth', authRouter)
 export default app;
