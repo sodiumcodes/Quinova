@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
     avatar:{
         type: String,
         public_id: String,
-        required: true,
     },
     coverImage:{
         type: String,
@@ -14,12 +13,11 @@ const userSchema = new mongoose.Schema({
     fullName:{
         type: String,
         trim: true,
+        unique: true,
     },
     username : {
         type: String,
         lowercase: true,
-        required : true,
-        unique: true,    
         trim: true, 
     },
     email: {
@@ -50,9 +48,9 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", function (next){
     //encrypting the password
     if(this.isModified("password")){
-        this.password = bcrypt.hash(thhis.password, 10);
+        this.password = bcrypt.hash(this.password, 10);
     }
-    return next();
+    // next();
 })
 //similarily we can also create our own methods
 
