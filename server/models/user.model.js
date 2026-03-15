@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema({
     fullName:{
         type: String,
         trim: true,
-        unique: true,
     },
     username : {
         type: String,
@@ -45,12 +44,11 @@ const userSchema = new mongoose.Schema({
 });
 //this is a middleware function
 //here we cannot use anonymouse function because there we dont have access to 'this' keyword
-userSchema.pre("save", function (next){
+userSchema.pre("save", async function (){
+
+    if(!this.isModified("password")) return ;
     //encrypting the password
-    if(this.isModified("password")){
-        this.password = bcrypt.hash(this.password, 10);
-    }
-    // next();
+    this.password = await bcrypt.hash(this.password, 10);
 })
 //similarily we can also create our own methods
 
