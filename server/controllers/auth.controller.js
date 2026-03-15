@@ -66,16 +66,20 @@ const login = asyncHandler(
         //now the user that we have here in login, is the old user not the updated one with tokens.
         //so for that reason we make db query.
         //it totally depends on the use case.
+        // Excluding password and refreshToken for security
+        const updatedUser = await User.findOne({ email }).select("-password -refreshToken");
 
-        const updatedUser = await User.findOne({ email }).select("-password-refreshToken");
+        // Cookie configuration // httpOnly prevents JavaScript from accessing cookies (protects against XSS) 
+        // secure ensures cookies are only sent over HTTPS
         const options = {
             httpOnly: true,
             secure : true,
         }
         res.cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options);
+        .cookie("refreshToken", refreshToken, options)
         // also include token in body so front end can store/use it
-        res.status(200).json( new ApiResponse(200,updatedUser,"Login successful."));
+        .status(200)
+        .json( new ApiResponse(200, updatedUser,"Login successful."));
 })
 
 export {login , register}
