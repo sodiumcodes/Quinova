@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         lowercase: true,
         trim: true, 
+        unique: true,
+        default : () => Math.random().toString(36).substring(2, 10),
     },
     email: {
         type: String,

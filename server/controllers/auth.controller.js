@@ -12,7 +12,7 @@ const register = asyncHandler(
         //         message: "All fields are required"
         //     })
         // }
-        if([fullName, email, password].some((field) => field?.trim() === "")){
+        if([fullName, email, password].some((field) => !field || field?.trim() === "")){
             throw new ApiError(400, "All fields are required.")
         }
 
@@ -24,7 +24,7 @@ const register = asyncHandler(
             fullName, email, password
         })
         // also include token in body so front end can store/use it
-        res.status(200).json({
+        res.status(201).json({
             message: "Registered successful.",
             user,
         });
