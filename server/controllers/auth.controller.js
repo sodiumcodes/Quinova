@@ -1,6 +1,18 @@
 import User from '../models/user.model.js'
 import { ApiError } from '../utils/ApiError.js';
-import asyncHandler from '../utils/asyncHandler.js'
+import asyncHandler from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+
+const generateAccessAndRefresehTokens= async (userId)=>{
+    const user = await User.findOne({ _id: userId });
+    const refreshToken= user.generateRefreshToken();
+    const accessToken = user.generateAccessToken();
+    user.refreshToken = refreshToken;
+
+    //when we do save, it will check for password as well, but we only need to save refresh token, so we do this: 
+    await user.save({ validateBeforeSave : false });
+    return {accessToken, refreshToken};
+}
 const register = asyncHandler(
     async(req,res)=>{
          //Collect data
@@ -18,16 +30,13 @@ const register = asyncHandler(
 
         //Check if user exists
         if (await User.findOne({ email })) {
-            throw new ApiError(400,"User already exists. Kindly login.");
+            throw new ApiError(409,"User already exists. Kindly login.");
         }
         const user = await User.create({
             fullName, email, password
         })
-        // also include token in body so front end can store/use it
-        res.status(201).json({
-            message: "Registered successful.",
-            user,
-        });
+        const updatedUser = await User.findOne({ email }).select("-password");
+        res.status(201).json( new ApiResponse(201,updatedUser,"Registered successful."));
 })
 const login = asyncHandler(
     async(req,res)=>{
@@ -50,15 +59,23 @@ const login = asyncHandler(
         if (!isMatch) {
             throw new ApiError(400, "Invalid Credentials.")
         }
+        
+        //Generate token
+        const {accessToken, refreshToken} = await generateAccessAndRefresehTokens(user._id);
 
-        // //Generate token
+        //now the user that we have here in login, is the old user not the updated one with tokens.
+        //so for that reason we make db query.
+        //it totally depends on the use case.
 
+        const updatedUser = await User.findOne({ email }).select("-password-refreshToken");
+        const options = {
+            httpOnly: true,
+            secure : true,
+        }
+        res.cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options);
         // also include token in body so front end can store/use it
-        res.status(200).json({
-            message: "Login successful.",
-            user,
-            // token
-        });
+        res.status(200).json( new ApiResponse(200,updatedUser,"Login successful."));
 })
 
 export {login , register}
