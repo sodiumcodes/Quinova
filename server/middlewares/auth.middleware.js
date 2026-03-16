@@ -15,7 +15,9 @@ const verifyUser = asyncHandler(
             */
             const accessToken =
                 req.cookies?.accessToken ||
+                //headers = "Bearer abc123"
                 req.headers.authorization?.split(" ")[1]
+                //["Bearer", "abc123"]
 
             if (!accessToken) {
                 throw new ApiError(401, "Unauthorized Access.");

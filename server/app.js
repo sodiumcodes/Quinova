@@ -20,10 +20,10 @@ app.use(morgan("dev")); // logs requests
 app.use(cookieParser());
 
 //routes import
-import UserRoute from './routes/user.route.js';
+import userRoute from './routes/user.route.js';
 import authRouter from './routes/auth.route.js';
 
 //routes declaration
-app.use('/user', UserRoute)
+app.use('/user', userRoute)
 app.use('/api/v1/auth', authRouter)
 export default app;

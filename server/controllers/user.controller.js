@@ -44,3 +44,4 @@ export const uploadAvatar = async (req, res) => {
     });
   }
 };
+export {uploadAvatar}
