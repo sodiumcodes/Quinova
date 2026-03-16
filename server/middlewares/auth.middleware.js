@@ -4,38 +4,51 @@ import asyncHandler from '../utils/asyncHandler.js';
 import jwt from "jsonwebtoken"
 
 const verifyUser = asyncHandler(
-    //since, we are not sending any response, we use '_'
+// since we are not sending any response from this middleware,
+// we use '_' for the response parameter to indicate it is unused
     async (req, _, next) => {
         try {
-
+            /*
+            Extract access token from either:
+                1) Cookies (preferred when using httpOnly cookies)
+                2) Authorization header (used in APIs/Postman/mobile apps)
+            */
             const accessToken =
                 req.cookies?.accessToken ||
-                req.header("Authorization")?.replace("Bearer ", "");
-            
+                req.headers.authorization?.split(" ")[1]
 
             if (!accessToken) {
                 throw new ApiError(401, "Unauthorized Access.");
             }
 
+            // Verify the token using the secret key
+            // If token is invalid or expired, jwt.verify will throw an error
             const decodedUser = jwt.verify(
                 accessToken,
                 process.env.ACCESS_TOKEN_SECRET
             );
-            console.log("Token:", decodedUser?._id);
-            const user = await User.findById(decodedUser?._id)
-                .select("-password -refreshToken");
+            // Extract the user id stored inside the token payload
+            const _id = decodedUser._id
 
+            const user = await User.findOne({_id})
+                        .select("-password -refreshToken");
+
+            // If user doesn't exist, the token is considered invalid
             if (!user) {
                 throw new ApiError(401, "Invalid access token");
             }
 
+            // Attach the authenticated user to the request object
+            // This allows later controllers to access req.user
             req.user = user;
             next();
 
-        } catch (error) {
+        } 
+        catch (error) {
+            // If any error occurs (token expired, invalid, DB error),
+            // return an authentication error
             throw new ApiError(401, error?.message || "Invalid access token");
         }
     }
 )
-
 export { verifyUser };
