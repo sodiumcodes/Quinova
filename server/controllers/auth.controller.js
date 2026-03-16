@@ -2,7 +2,14 @@ import User from '../models/user.model.js'
 import { ApiError } from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { verifyRefreshToken } from '../utils/jwt.js';
 
+// Cookie configuration // httpOnly prevents JavaScript from accessing cookies (protects against XSS) 
+// secure ensures cookies are only sent over HTTPS
+const options = {
+    httpOnly: true,
+    secure : true,
+}
 const generateAccessAndRefresehTokens= async (userId)=>{
     const user = await User.findOne({ _id: userId });
     const refreshToken= user.generateRefreshToken();
@@ -69,12 +76,6 @@ const login = asyncHandler(
         // Excluding password and refreshToken for security
         const updatedUser = await User.findOne({ email }).select("-password -refreshToken");
 
-        // Cookie configuration // httpOnly prevents JavaScript from accessing cookies (protects against XSS) 
-        // secure ensures cookies are only sent over HTTPS
-        const options = {
-            httpOnly: true,
-            secure : true,
-        }
         res.cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         // also include token in body so front end can store/use it
@@ -92,10 +93,6 @@ const logout = asyncHandler(
                 new: true
             }
         )
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
         res.status(200)
         .clearCookie("refreshToken")
         .clearCookie("accessToken")
@@ -104,4 +101,34 @@ const logout = asyncHandler(
         )
     }
 )
-export {login, logout, register}
+//This function allows a user to stay logged in without repeatedly entering credentials, 
+//while still keeping access tokens short-lived and secure.
+const refreshAccessToken= asyncHandler(
+    async (req, res) => {
+        const incomingRefreshToken = req.cookie.refreshToken || req.body.refreshToken
+        if(!incomingRefreshToken) throw new ApiError(401, "Unauthorized Access.");
+
+        try {
+            const decodedToken = verifyRefreshToken(incomingRefreshToken);
+    
+            const user = User.findById(decodedToken?._id).select("-password");
+            if(!user) throw new ApiError(401, "Invalid Refresh Token.");
+    
+            //check if the incoming refresh token is actually correct or not--- meaning if its from the same user or not
+            if(incomingRefreshToken !== decodedUser?.refreshToken){
+                throw new ApiError(401, "Refresh Token Expired or Used.");
+            }
+            const {accessToken, newRefreshToken} = await generateAccessAndRefresehTokens();
+    
+            res.cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .status(200).json(
+               new ApiResponse(200, { accessToken, refreshToken } , "Access Token Refreshed.")
+            )
+        } 
+        catch (error) {
+            throw new ApiError(400, error.message || "Invalid Request.")
+        }
+    }
+)
+export {login, logout, register, refreshAccessToken}
