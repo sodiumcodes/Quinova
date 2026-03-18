@@ -1,14 +1,15 @@
 import ImageKitService from "../services/imagekit.service.js";
 import User from '../models/user.model.js'
-export const uploadAvatar = async (req, res) => {
-  try {
+import { ApiError } from '../utils/ApiError.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+
+const uploadAvatar = asyncHandler(
+  async (req,res) => {
     //Multer already processed the file and attached it to req.file
     if (!req.file) {
-      return res.status(400).json({
-        message: "No file uploaded"
-      });
+      throw new ApiError(400, "No file uploaded");
     }
-
     //req.file.buffer contains binary image data
     //req.file.originalname contains file name
  
@@ -17,7 +18,6 @@ export const uploadAvatar = async (req, res) => {
       req.file.originalname,
       "avatar"
     );
-    
     const user = await User.findById(req.user.id);
 
     //if there is an avatar already there, and we are now updating it, 
@@ -30,18 +30,31 @@ export const uploadAvatar = async (req, res) => {
         url: uploadedImage.url,
         fileId: uploadedImage.fileId
     };
-
     await user.save();
-    res.status(200).json({
-      message: "Image uploaded successfully",
-      url: uploadedImage.url
-    });
-  } 
-  catch (error) {
-    res.status(500).json({
-      message: "Upload failed",
-      error: error.message
-    });
+    return res.status(200).json(
+      new ApiResponse(200, uploadedImage.url, "Image uploaded successfully.")
+    )
   }
-};
-export {uploadAvatar}
+) 
+
+const changePassword= asyncHandler(
+  async (req,res) => {
+    console.log(req.body);
+    const {oldPassword, newPassword} = req.body
+    const userWithPassword = await User.findById(req.user?._id)
+    const isMatch = await userWithPassword.isPasswordCorrect(oldPassword)
+
+    if (!isMatch) {
+      throw new ApiError(400, "Old password is wrong.")
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(req.user?._id, {
+      password : newPassword
+    })
+    await updatedUser.save({ validateBeforeSave : false });
+    return res.status(200).json(
+      new ApiResponse(200, updatedUser, "Password updated successfully.")
+    )
+  }
+)
+export {uploadAvatar , changePassword}
