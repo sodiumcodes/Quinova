@@ -47,13 +47,13 @@ const changePassword= asyncHandler(
     if (!isMatch) {
       throw new ApiError(400, "Old password is wrong.")
     }
-
-    const updatedUser = await User.findByIdAndUpdate(req.user?._id, {
-      password : newPassword
-    })
-    await updatedUser.save({ validateBeforeSave : false });
+    if(oldPassword === newPassword){
+      throw new ApiError(400, "Old password and New password cannot be same.")
+    }
+    userWithPassword.password = newPassword;
+    await userWithPassword.save();
     return res.status(200).json(
-      new ApiResponse(200, updatedUser, "Password updated successfully.")
+      new ApiResponse(200, userWithPassword, "Password updated successfully.")
     )
   }
 )
