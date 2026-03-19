@@ -83,7 +83,6 @@ const updateEmail = asyncHandler(
     )
   } 
 )
-
 const uploadCoverImage = asyncHandler(
   async (req,res) => {
     //Multer already processed the file and attached it to req.file
@@ -116,4 +115,86 @@ const uploadCoverImage = asyncHandler(
     )
   }
 )
-export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName }
+const getChanelProfile = asyncHandler(
+  async (req,res) => {
+    //get the username from the url
+    const {username} = req.params
+
+    //check if its empty 
+    if(!username?.trim()){
+      throw new ApiError(400, "username is missing.")
+    }
+
+    //store the count
+    const channel = await User.aggregate([
+      {
+        //find that user
+        $match : {
+          username: username?.toLowerCase()
+        }
+      },
+      {
+        //find how many people are subscribed to this user
+        $lookup : {
+          from: "subscriptions", //alias that will stored in MongoDB
+          localField: "_id",
+          foreignField: "channel",
+          as: "subscribers"
+        }
+      },
+      {
+        //find which channels this user is subscribed to
+        $lookup : {
+          from: "subscriptions", //alias that will stored in MongoDB
+          localField: "_id",
+          foreignField: "subscriber",
+          as: "subscribedTo"
+        }
+      },
+      {
+        //adding subscribers and subscribedTo count in the object 
+        //AND 
+        //for frontend we have an if condition on basis of which it will show subscribed / subscribe
+        $addFields : {
+          
+          subscribersCount: {
+            $size: "$subscribers"
+          },
+          channelsSubscribedToCount: {
+            $size: "$subscribedTo"
+          },
+          $isSubscribed: {
+            $cond:{
+              if : {$in: [req.user?._id, "$subscribers.subscriber"]},
+              then : true,
+              else : false
+            }
+          }   
+        }
+      },
+      {
+        //what all values to send as res
+        $project: {
+          fullName: 1,
+          username: 1,
+          subscribersCount: 1,
+          channelsSubscribedToCount: 1,
+          isSubscribed: 1,
+          avatar: 1,
+          coverImage: 1,
+          email: 1
+        }
+      }
+    ])
+
+    //check if channel found
+    if(!channel?.length){
+      throw new ApiError(404, "Channel not found.");
+    }
+    return res.status(200)
+    .json(
+        new ApiResponse(200, channel[0], "User channel fetched successfully")
+    )
+  }
+)
+export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName , getChanelProfile}
