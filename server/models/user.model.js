@@ -5,9 +5,11 @@ const userSchema = new mongoose.Schema({
     avatar:{
         type: String,
         public_id: String,
+        default : "",
     },
     coverImage:{
         type: String,
+        public_id: String,
         default : "",
     },
     fullName:{
