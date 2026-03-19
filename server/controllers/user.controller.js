@@ -3,6 +3,7 @@ import User from '../models/user.model.js'
 import { ApiError } from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import { useReducer } from "react";
 
 const uploadAvatar = asyncHandler(
   async (req,res) => {
@@ -193,8 +194,60 @@ const getChanelProfile = asyncHandler(
     }
     return res.status(200)
     .json(
-        new ApiResponse(200, channel[0], "User channel fetched successfully")
+      new ApiResponse(200, channel[0], "User channel fetched successfully")
     )
   }
 )
-export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName , getChanelProfile}
+const getWatchHistory = asyncHandler(
+  async (req,res) => {
+
+    const history = await User.aggregate([
+      {
+        $match : { _id: new mongoose.Types.ObjectId(req.user._id) }
+      },
+      {
+        //first get watch history
+        $lookup : {
+          from: "videos", //alias that will stored in MongoDB
+          localField: "watchHistory",
+          foreignField: "_id",
+          as: "history",
+          pipeline : [
+            {
+              $lookup : {
+                from: "user", //alias that will stored in MongoDB
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline : [
+                  {
+                    $project : {
+                      username : 1,
+                      avatar : 1,
+                      coverImage : 1,
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              $addFields : {
+                owner : {
+                  $first : "$owner",
+                } 
+              }
+            }
+          ]
+        }
+      },
+      {
+
+      }
+    ])
+    res.status(200)
+    .json(
+      new ApiResponse (200,owner, "User watch history fetched successfully")
+    )
+  }
+)
+export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName , getChanelProfile , getWatchHistory }
