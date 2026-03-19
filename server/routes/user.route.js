@@ -7,12 +7,13 @@ updateFullName , getChanelProfile , getWatchHistory }
 from "../controllers/user.controller.js";
 
 const router = express.Router();
-router.post( "/upload-avatar" ,verifyUser, upload.single("avatar") , uploadAvatar );
-router.post("/upload-coverImage", verifyUser, upload.single("coverImage"), uploadCoverImage )
-router.post("/update-fullName", verifyUser, updateFullName )
-router.post("/update-email", verifyUser, updateEmail )
-router.post("/update-password", verifyUser, updatePassword )
-router.post("/channel-profile", getChanelProfile);
-router.post("/watch-history",verifyUser, getWatchHistory);
+router.route( "/upload-avatar").patch(verifyUser, upload.single("avatar") , uploadAvatar );
+router.route("/upload-coverImage").patch(verifyUser, upload.single("coverImage"), uploadCoverImage )
+router.route("/update-fullName").patch(verifyUser, updateFullName )
+router.route("/update-email").patch(verifyUser, updateEmail )
+router.route("/update-password").patch(verifyUser, updatePassword )
+
+router.route("/c/:username").get(verifyUser, getChanelProfile);
+router.route("/watch-history").get(verifyUser, getWatchHistory);
 
 export default router;
