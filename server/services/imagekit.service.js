@@ -1,7 +1,8 @@
 import imagekit from "../configs/imagekit.config.js";
 class ImageKitService {
 //This function uploads image to ImageKit
-static async uploadImage(fileBuffer, fileName, folder) {
+
+static async uploadImage(fileBuffer, fileName, folder="") {
     try {
       /* imagekit.upload sends file to ImageKit servers*/
       const response = await imagekit.files.upload({
@@ -21,10 +22,10 @@ static async uploadImage(fileBuffer, fileName, folder) {
   }
   static async deleteImage(fileId){
     try{
-      await client.files.delete(fileId);
+      await imagekit.files.delete(fileId);
     }
     catch(error){
-      throw new error;
+      throw error;
     }
   }
 }

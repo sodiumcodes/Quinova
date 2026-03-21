@@ -3,7 +3,7 @@ import User from '../models/user.model.js'
 import { ApiError } from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { useReducer } from "react";
+import mongoose from 'mongoose';
 
 const uploadAvatar = asyncHandler(
   async (req,res) => {
@@ -15,7 +15,7 @@ const uploadAvatar = asyncHandler(
     //req.file.originalname contains file name
  
     const uploadedImage = await ImageKitService.uploadImage(
-      req.file.buffer,
+      req.file.buffer.toString("base64"),
       req.file.originalname,
       "avatar"
     );
@@ -31,7 +31,7 @@ const uploadAvatar = asyncHandler(
         url: uploadedImage.url,
         fileId: uploadedImage.fileId
     };
-    await user.save();
+    await user.save({validateBeforeSave: false});
     return res.status(200).json(
       new ApiResponse(200, uploadedImage.url, "Image uploaded successfully.")
     )
@@ -39,7 +39,7 @@ const uploadAvatar = asyncHandler(
 ) 
 const updatePassword= asyncHandler(
   async (req,res) => {
-    console.log(req.body);
+    
     const {oldPassword, newPassword} = req.body
     const userWithPassword = await User.findById(req.user?._id)
     const isMatch = await userWithPassword.isPasswordCorrect(oldPassword)
@@ -61,9 +61,10 @@ const updateFullName = asyncHandler(
   async (req,res) => {
     // req.user
     const name = req.body.fullName
-    if(!name){
+    if(!name || name === req.user.fullName ){
       throw new ApiError(400, "Please provide with a new name.")
     }
+
     req.user.fullName = name;
     await req.user.save({validateBeforeSave: false});
     res.status(200).json(
@@ -74,7 +75,7 @@ const updateFullName = asyncHandler(
 const updateEmail = asyncHandler(
   async (req,res) => {
     const newEmail = req.body.email
-    if(newEmail){
+    if(!newEmail || newEmail === req.user.email){
       throw new ApiError(400, "Please provide with a new email.")
     }
     req.user.email = newEmail;
@@ -94,7 +95,7 @@ const uploadCoverImage = asyncHandler(
     //req.file.originalname contains file name
  
     const uploadedImage = await ImageKitService.uploadImage(
-      req.file.buffer,
+      req.file.buffer.toString("base64"),
       req.file.originalname,
       "coverImage"
     );
@@ -110,7 +111,7 @@ const uploadCoverImage = asyncHandler(
         url: uploadedImage.url,
         fileId: uploadedImage.fileId
     };
-    await user.save();
+    await user.save({validateBeforeSave: false});
     return res.status(200).json(
       new ApiResponse(200, uploadedImage.url, "Image uploaded successfully.")
     )
@@ -164,7 +165,7 @@ const getChanelProfile = asyncHandler(
           channelsSubscribedToCount: {
             $size: "$subscribedTo"
           },
-          $isSubscribed: {
+          isSubscribed: {
             $cond:{
               if : {$in: [req.user?._id, "$subscribers.subscriber"]},
               then : true,
@@ -189,8 +190,11 @@ const getChanelProfile = asyncHandler(
     ])
 
     //check if channel found
-    if(!channel?.length){
+    if(!channel){
       throw new ApiError(404, "Channel not found.");
+    }
+    else if(!channel?.length){
+      throw new ApiError(404, "User is not subscribed to any channels.");
     }
     return res.status(200)
     .json(
@@ -215,7 +219,7 @@ const getWatchHistory = asyncHandler(
           pipeline : [
             {
               $lookup : {
-                from: "user", //alias that will stored in MongoDB
+                from: "users", //alias that will stored in MongoDB
                 localField: "owner",
                 foreignField: "_id",
                 as: "owner",
@@ -239,14 +243,12 @@ const getWatchHistory = asyncHandler(
             }
           ]
         }
-      },
-      {
-
       }
     ])
+
     res.status(200)
     .json(
-      new ApiResponse (200,owner, "User watch history fetched successfully")
+      new ApiResponse (200, {} , "User watch history fetched successfully")
     )
   }
 )

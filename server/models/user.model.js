@@ -4,12 +4,12 @@ import bcrypt from 'bcrypt';
 const userSchema = new mongoose.Schema({
     avatar:{
         type: String,
-        public_id: String,
+        fileId: String,
         default : "",
     },
     coverImage:{
         type: String,
-        public_id: String,
+        fileId: String,
         default : "",
     },
     fullName:{
