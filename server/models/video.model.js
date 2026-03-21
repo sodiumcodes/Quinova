@@ -33,7 +33,17 @@ const videoSchema = new mongoose.Schema({
     isPublished:{
         type:Boolean,
         default: false,
-    }
+    },
+    //mux setup for video upload and stream
+    muxAssetId: {
+        type: String,
+        required: true,
+    },
+
+    muxPlaybackId: {
+        type: String,
+        required: true,
+    },
 },
 {
     timestamps : true

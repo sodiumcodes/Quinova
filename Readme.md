@@ -110,10 +110,6 @@ server/
 - Video upload/publish/search/views routes
 - Subscription CRUD
 - Comments/Likes/Playlists
-- Video streaming (HLS?), compression
-- Rate limiting (express-rate-limit)
-- Tests (Jest/Supertest)
-- Docker/PM2 deployment
 
 ## Contributing
 1. Fork & PR
