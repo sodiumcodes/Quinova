@@ -85,38 +85,6 @@ const updateEmail = asyncHandler(
     )
   } 
 )
-const uploadCoverImage = asyncHandler(
-  async (req,res) => {
-    //Multer already processed the file and attached it to req.file
-    if (!req.file) {
-      throw new ApiError(400, "No file uploaded");
-    }
-    //req.file.buffer contains binary image data
-    //req.file.originalname contains file name
- 
-    const uploadedImage = await ImageKitService.uploadImage(
-      req.file.buffer.toString("base64"),
-      req.file.originalname,
-      "coverImage"
-    );
-    const user = await User.findById(req.user.id);
-
-    //if there is an avatar already there, and we are now updating it, 
-    // so to delete the previous one we do this:
-    if (user.coverImage?.fileId) {
-        await ImageKitService.deleteImage(user.avatar.fileId);
-    }
-    //and the update: 
-    user.coverImage = {
-        url: uploadedImage.url,
-        fileId: uploadedImage.fileId
-    };
-    await user.save({validateBeforeSave: false});
-    return res.status(200).json(
-      new ApiResponse(200, uploadedImage.url, "Image uploaded successfully.")
-    )
-  }
-)
 const getFollowingFollowers = asyncHandler(async (req, res) => {
 
     const { username } = req.params;
@@ -206,4 +174,4 @@ const getWatchHistory = asyncHandler(
     )
   }
 )
-export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , getWatchHistory }
+export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , getWatchHistory }

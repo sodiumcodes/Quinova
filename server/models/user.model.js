@@ -7,11 +7,6 @@ const userSchema = new mongoose.Schema({
         fileId: String,
         default : "",
     },
-    coverImage:{
-        type: String,
-        fileId: String,
-        default : "",
-    },
     fullName:{
         type: String,
         trim: true,
