@@ -124,54 +124,40 @@ const getFollowingFollowers = asyncHandler(async (req, res) => {
         )
     );
 });
-const getWatchHistory = asyncHandler(
+const updateBio = asyncHandler(
   async (req,res) => {
-
-    const history = await User.aggregate([
-      {
-        $match : { _id: new mongoose.Types.ObjectId(req.user._id) }
-      },
-      {
-        //first get watch history
-        $lookup : {
-          from: "videos", //alias that will stored in MongoDB
-          localField: "watchHistory",
-          foreignField: "_id",
-          as: "history",
-          pipeline : [
-            {
-              $lookup : {
-                from: "users", //alias that will stored in MongoDB
-                localField: "owner",
-                foreignField: "_id",
-                as: "owner",
-                pipeline : [
-                  {
-                    $project : {
-                      username : 1,
-                      avatar : 1,
-                      coverImage : 1,
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              $addFields : {
-                owner : {
-                  $first : "$owner",
-                } 
-              }
-            }
-          ]
-        }
-      }
-    ])
-
-    res.status(200)
-    .json(
-      new ApiResponse (200, {} , "User watch history fetched successfully")
+    const newBio = req.body.bio
+    if(!newBio || newBio === req.user.bio){
+      throw new ApiError(400, "Please provide with a new bio.")
+    }
+    req.user.bio = newBio;
+    await req.user.save({validateBeforeSave: false});
+    res.status(200).json(
+      new ApiResponse(200, newBio, "Bio updated successfully")
     )
   }
 )
-export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , getWatchHistory }
+const updateSocialLinks = asyncHandler(
+  async (req,res) => {
+    const { github, linkedin, twitter, website } = req.body;
+    if(!github && !linkedin && !twitter && !website){
+      throw new ApiError(400, "Please provide with at least one social link to update.")
+    }
+    if(github) req.user.socialLinks.github = github;
+    if(linkedin) req.user.socialLinks.linkedin = linkedin;
+    if(twitter) req.user.socialLinks.twitter = twitter;
+    if(website) req.user.socialLinks.website = website;
+    await req.user.save({validateBeforeSave: false});
+    res.status(200).json(
+      new ApiResponse(200, req.user.socialLinks, "Social links updated successfully")
+    )
+  }
+)
+const getUserProfile = asyncHandler(
+    async (req,res) => {
+        return res.status(200).json(
+            new ApiResponse(200, req.user, "Current User.")
+        )
+    }
+)
+export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile }

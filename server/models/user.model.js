@@ -29,10 +29,17 @@ const userSchema = new mongoose.Schema({
         required : true,
         trim: true,
     },
-    watchHistory:[{
-        type: Schema.Types.ObjectId,
-        ref : "Video"
-    }],
+    bio:{
+        type: String,
+        maxLength: 300,
+        default: "",
+    },
+    socialLinks: {
+        github: { type: String, default: "" },
+        linkedin: { type: String, default: "" },
+        twitter: { type: String, default: "" },
+        website: { type: String, default: "" }
+    },
     following: [
         {
             type: mongoose.Schema.Types.ObjectId,
