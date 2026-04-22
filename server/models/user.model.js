@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref : "Video"
     }],
+    following: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],
+    followers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],
     refreshToken:{
         type:String,
     },

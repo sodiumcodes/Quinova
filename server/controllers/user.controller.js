@@ -117,91 +117,45 @@ const uploadCoverImage = asyncHandler(
     )
   }
 )
-const getChanelProfile = asyncHandler(
-  async (req,res) => {
-    //get the username from the url
-    const {username} = req.params
+const getFollowingFollowers = asyncHandler(async (req, res) => {
 
-    //check if its empty 
-    if(!username?.trim()){
-      throw new ApiError(400, "username is missing.")
+    const { username } = req.params;
+
+    if (!username || !username.trim()) {
+        throw new ApiError(400, "Username is required");
     }
 
-    //store the count
-    const channel = await User.aggregate([
-      {
-        //find that user
-        $match : {
-          username: username?.toLowerCase()
-        }
-      },
-      {
-        //find how many people are subscribed to this user
-        $lookup : {
-          from: "subscriptions", //alias that will stored in MongoDB
-          localField: "_id",
-          foreignField: "channel",
-          as: "subscribers"
-        }
-      },
-      {
-        //find which channels this user is subscribed to
-        $lookup : {
-          from: "subscriptions", //alias that will stored in MongoDB
-          localField: "_id",
-          foreignField: "subscriber",
-          as: "subscribedTo"
-        }
-      },
-      {
-        //adding subscribers and subscribedTo count in the object 
-        //AND 
-        //for frontend we have an if condition on basis of which it will show subscribed / subscribe
-        $addFields : {
-          
-          subscribersCount: {
-            $size: "$subscribers"
-          },
-          channelsSubscribedToCount: {
-            $size: "$subscribedTo"
-          },
-          isSubscribed: {
-            $cond:{
-              if : {$in: [req.user?._id, "$subscribers.subscriber"]},
-              then : true,
-              else : false
-            }
-          }   
-        }
-      },
-      {
-        //what all values to send as res
-        $project: {
-          fullName: 1,
-          username: 1,
-          subscribersCount: 1,
-          channelsSubscribedToCount: 1,
-          isSubscribed: 1,
-          avatar: 1,
-          coverImage: 1,
-          email: 1
-        }
-      }
-    ])
+    //Find user we are trying to view
+    const user = await User.findOne({
+        username: username.toLowerCase()
+    })
+    .select("fullName username avatar followers following");
 
-    //check if channel found
-    if(!channel){
-      throw new ApiError(404, "Channel not found.");
+    if (!user) {
+        throw new ApiError(404, "User not found");
     }
-    else if(!channel?.length){
-      throw new ApiError(404, "User is not subscribed to any channels.");
-    }
-    return res.status(200)
-    .json(
-      new ApiResponse(200, channel[0], "User channel fetched successfully")
-    )
-  }
-)
+
+    const followersCount = user.followers.length;
+    const followingCount = user.following.length;
+
+    //Check if logged-in user follows this user
+    const isFollowing = user.followers.includes(req.user?._id);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                fullName: user.fullName,
+                username: user.username,
+                avatar: user.avatar,
+                followersCount,
+                followingCount,
+                isFollowing,
+            },
+            "Followers and following fetched successfully"
+        )
+    );
+});
 const getWatchHistory = asyncHandler(
   async (req,res) => {
 
@@ -252,4 +206,4 @@ const getWatchHistory = asyncHandler(
     )
   }
 )
-export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName , getChanelProfile , getWatchHistory }
+export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , getWatchHistory }
