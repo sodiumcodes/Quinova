@@ -2,7 +2,7 @@ import express from "express";
 import upload from "../middlewares/upload.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import 
-{ uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile}  
+{ uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile, updateUserName }  
 from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.route("/update-email").patch( updateEmail ) //ok
 router.route("/update-password").patch( updatePassword ) //ok
 router.route("/update-bio").patch( updateBio ) //ok
 router.route("/update-socials").patch( updateSocialLinks ) //ok
+router.route("/update-username").patch( updateUserName ) //ok
 
 //get
 router.route("profile/:username").get( getUserProfile );

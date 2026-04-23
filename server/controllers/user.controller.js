@@ -85,6 +85,23 @@ const updateEmail = asyncHandler(
     )
   } 
 )
+const updateUserName = asyncHandler(
+  async (req,res) => {
+    const username= req.body.username;
+    if(!username){
+      throw new ApiError(400, "Username can not be empty.")
+    }
+    if(req.user.username === username){
+      throw new ApiError(400, "Username is same as before. It should be new.")
+    }
+    req.user.username= username;
+    await req.user.save({validateBeforeSave: false});
+    res.status(200)
+    .json(
+      new ApiResponse(200, req.user, "Username updated successfully.")
+    )
+  }
+)
 const getFollowingFollowers = asyncHandler(async (req, res) => {
 
     const { username } = req.params;
@@ -160,4 +177,4 @@ const getUserProfile = asyncHandler(
         )
     }
 )
-export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile }
+export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile, updateUserName }
