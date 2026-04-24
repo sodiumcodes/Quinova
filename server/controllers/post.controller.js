@@ -84,14 +84,38 @@ const viewAllPosts = asyncHandler(
             .json(new ApiResponse(200, posts, `Posts by ${username}`));
     }
 )
-
 //edit post
-const editPost = asyncHandler(
+const editImages = asyncHandler(
     async (req,res) => {
-        
+        //get post id
     }
 )
-
+const editCaption = asyncHandler(
+    async (req,res) => {
+        //get post id
+        const {id}= req.params
+        if(req.body.caption){
+            const post = await Post.findById(id);
+            post.caption = req.body.caption
+            post.save({validateBeforeSave : false})
+        }
+        return res.status(200)
+                .json( new ApiResponse(200, "Caption updated successfully."))
+    }
+)
+const editTag = asyncHandler(
+    async (req,res) => {
+        //get post id
+        const {id}= req.params
+        if(req.body.tags){
+            const post = await Post.findById(id);
+            post.tags = req.body.tag
+            post.save({validateBeforeSave : false})
+        }
+        return res.status(200)
+                .json( new ApiResponse(200, "Tags updated successfully."))
+    }
+)
 //delete post
 const deletePost = asyncHandler(
     async (req,res) => {
@@ -122,4 +146,4 @@ const deletePost = asyncHandler(
     }
 )
 
-export { createPost, viewPostById, viewAllPosts, editPost, deletePost }
+export { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost }
