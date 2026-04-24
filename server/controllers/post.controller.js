@@ -10,7 +10,8 @@ const createPost = asyncHandler(
         const{caption, tags} = req.body;
         //we will get images from req.files
         const images= req.files;
-        if(!images || !(captions || tags)){
+        //only image is complusory
+        if(!images){
             throw new ApiError(400, "Can't create an empty post.");
         }
         //storing images
