@@ -3,6 +3,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import ImageKitService from "../services/imagekit.service.js";
 import Post from '../models/post.model.js';
+import mongoose from "mongoose";
 
 //create post
 const createPost = asyncHandler(
@@ -10,7 +11,6 @@ const createPost = asyncHandler(
         const{caption, tags} = req.body;
         //we will get images from req.files
         const images= req.files;
-        //only image is complusory
         if(!images){
             throw new ApiError(400, "Can't create an empty post.");
         }
@@ -27,6 +27,7 @@ const createPost = asyncHandler(
                 fileId: uploaded.fileId,
             });
         }
+        
         //post creation
         const post = await Post.create({
             caption: caption,
@@ -41,10 +42,26 @@ const createPost = asyncHandler(
     }
 )
 
-//view post
-const viewPost = asyncHandler(
+//view post -single
+const viewPostById = asyncHandler(
     async(req,res)=>{
+        //in post.route.js file, the parameter name was different
+        const { id } = req.params;
+        console.log(id);
 
+        const post = await Post.findById(id).populate("author", "username avatar");
+        console.log(post);
+        
+        if(!post){
+            throw ApiError(404, "No post found");
+        }
+        return res.status(200)
+            .json(new ApiResponse(200, post, "Single post"));
+    }
+)
+const viewAllPost = asyncHandler(
+    async (req,res) => {
+        
     }
 )
 
@@ -62,4 +79,4 @@ const deletePost = asyncHandler(
     }
 )
 
-export { createPost, viewPost, editPost, deletePost }
+export { createPost, viewPostById, editPost, deletePost }
