@@ -9,5 +9,5 @@ router.use(verifyUser);
 router.route("/create-post").post(upload.array("posts", 5), createPost);//working
 
 //get
-router.route("/view-post/:username").get(viewPostById);
+router.route("/view-post/:id").get(viewPostById);
 export default router;

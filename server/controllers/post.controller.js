@@ -45,12 +45,11 @@ const createPost = asyncHandler(
 //view post -single
 const viewPostById = asyncHandler(
     async(req,res)=>{
-        //in post.route.js file, the parameter name was different
+        //in post.route.js file, the parameter name was different.
         const { id } = req.params;
         console.log(id);
 
         const post = await Post.findById(id).populate("author", "username avatar");
-        console.log(post);
         
         if(!post){
             throw ApiError(404, "No post found");
