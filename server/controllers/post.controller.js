@@ -17,7 +17,7 @@ const createPost = asyncHandler(
         //storing images
         const imageArray = [];
         for(const image of images){
-            const uploaded = ImageKitService.uploadImage(
+            const uploaded = await ImageKitService.uploadImage(
                 image.buffer.toString("base64"),
                 image.originalname,
                 "posts"
@@ -36,7 +36,7 @@ const createPost = asyncHandler(
         })
         res.status(201)
         .json(
-            ApiResponse(201, post ,"post create succesfully.")
+            new ApiResponse(201, post ,"post create succesfully.")
         )
     }
 )

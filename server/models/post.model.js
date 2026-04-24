@@ -6,11 +6,20 @@ const postSchema = new mongoose.Schema({
             default:"",
             trim:true,
         },
-        images:[{
-            type: String,
-            fieldId: String,
-            altText: String,
-        }],
+         images:[
+            {
+                url: 
+                { 
+                    type: String, 
+                    required: true 
+                },
+                fileId: 
+                { 
+                    type: String, 
+                    required: true 
+                }
+            }
+        ],
         tags: [
             {
             type: String,
