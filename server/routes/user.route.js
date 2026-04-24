@@ -2,18 +2,24 @@ import express from "express";
 import upload from "../middlewares/upload.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import 
-{ uploadAvatar , uploadCoverImage, updatePassword , updateEmail, 
-updateFullName , getChanelProfile , getWatchHistory }  
+{ uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile, updateUserName }  
 from "../controllers/user.controller.js";
 
 const router = express.Router();
-router.route("/upload-avatar").patch(verifyUser, upload.single("avatar") , uploadAvatar ); //ok
-router.route("/upload-coverImage").patch(verifyUser, upload.single("coverImage"), uploadCoverImage ); //ok
-router.route("/update-fullName").patch(verifyUser, updateFullName ) //ok
-router.route("/update-email").patch(verifyUser, updateEmail ) //ok
-router.route("/update-password").patch(verifyUser, updatePassword ) //ok
+router.use(verifyUser); // Apply verifyUser middleware to all routes in this router
 
-router.route("/channel/:username").get(verifyUser, getChanelProfile); //ok
-router.route("/watch-history").get(verifyUser, getWatchHistory); //ok
+//patch
+router.route("/upload-avatar").patch( upload.single("avatar") , uploadAvatar ); //ok
+router.route("/update-fullName").patch( updateFullName ) //ok
+router.route("/update-email").patch( updateEmail ) //ok
+router.route("/update-password").patch( updatePassword ) //ok
+router.route("/update-bio").patch( updateBio ) //ok
+router.route("/update-socials").patch( updateSocialLinks ) //ok
+router.route("/update-username").patch( updateUserName ) //ok
+
+//get
+router.route("profile/:username").get( getUserProfile );
+router.route("/follow/:username").get( getFollowingFollowers); 
+
 
 export default router;

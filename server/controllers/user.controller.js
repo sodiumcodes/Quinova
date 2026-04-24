@@ -85,171 +85,96 @@ const updateEmail = asyncHandler(
     )
   } 
 )
-const uploadCoverImage = asyncHandler(
+const updateUserName = asyncHandler(
   async (req,res) => {
-    //Multer already processed the file and attached it to req.file
-    if (!req.file) {
-      throw new ApiError(400, "No file uploaded");
+    const username= req.body.username;
+    if(!username){
+      throw new ApiError(400, "Username can not be empty.")
     }
-    //req.file.buffer contains binary image data
-    //req.file.originalname contains file name
- 
-    const uploadedImage = await ImageKitService.uploadImage(
-      req.file.buffer.toString("base64"),
-      req.file.originalname,
-      "coverImage"
-    );
-    const user = await User.findById(req.user.id);
-
-    //if there is an avatar already there, and we are now updating it, 
-    // so to delete the previous one we do this:
-    if (user.coverImage?.fileId) {
-        await ImageKitService.deleteImage(user.avatar.fileId);
+    if(req.user.username === username){
+      throw new ApiError(400, "Username is same as before. It should be new.")
     }
-    //and the update: 
-    user.coverImage = {
-        url: uploadedImage.url,
-        fileId: uploadedImage.fileId
-    };
-    await user.save({validateBeforeSave: false});
-    return res.status(200).json(
-      new ApiResponse(200, uploadedImage.url, "Image uploaded successfully.")
-    )
-  }
-)
-const getChanelProfile = asyncHandler(
-  async (req,res) => {
-    //get the username from the url
-    const {username} = req.params
-
-    //check if its empty 
-    if(!username?.trim()){
-      throw new ApiError(400, "username is missing.")
-    }
-
-    //store the count
-    const channel = await User.aggregate([
-      {
-        //find that user
-        $match : {
-          username: username?.toLowerCase()
-        }
-      },
-      {
-        //find how many people are subscribed to this user
-        $lookup : {
-          from: "subscriptions", //alias that will stored in MongoDB
-          localField: "_id",
-          foreignField: "channel",
-          as: "subscribers"
-        }
-      },
-      {
-        //find which channels this user is subscribed to
-        $lookup : {
-          from: "subscriptions", //alias that will stored in MongoDB
-          localField: "_id",
-          foreignField: "subscriber",
-          as: "subscribedTo"
-        }
-      },
-      {
-        //adding subscribers and subscribedTo count in the object 
-        //AND 
-        //for frontend we have an if condition on basis of which it will show subscribed / subscribe
-        $addFields : {
-          
-          subscribersCount: {
-            $size: "$subscribers"
-          },
-          channelsSubscribedToCount: {
-            $size: "$subscribedTo"
-          },
-          isSubscribed: {
-            $cond:{
-              if : {$in: [req.user?._id, "$subscribers.subscriber"]},
-              then : true,
-              else : false
-            }
-          }   
-        }
-      },
-      {
-        //what all values to send as res
-        $project: {
-          fullName: 1,
-          username: 1,
-          subscribersCount: 1,
-          channelsSubscribedToCount: 1,
-          isSubscribed: 1,
-          avatar: 1,
-          coverImage: 1,
-          email: 1
-        }
-      }
-    ])
-
-    //check if channel found
-    if(!channel){
-      throw new ApiError(404, "Channel not found.");
-    }
-    else if(!channel?.length){
-      throw new ApiError(404, "User is not subscribed to any channels.");
-    }
-    return res.status(200)
-    .json(
-      new ApiResponse(200, channel[0], "User channel fetched successfully")
-    )
-  }
-)
-const getWatchHistory = asyncHandler(
-  async (req,res) => {
-
-    const history = await User.aggregate([
-      {
-        $match : { _id: new mongoose.Types.ObjectId(req.user._id) }
-      },
-      {
-        //first get watch history
-        $lookup : {
-          from: "videos", //alias that will stored in MongoDB
-          localField: "watchHistory",
-          foreignField: "_id",
-          as: "history",
-          pipeline : [
-            {
-              $lookup : {
-                from: "users", //alias that will stored in MongoDB
-                localField: "owner",
-                foreignField: "_id",
-                as: "owner",
-                pipeline : [
-                  {
-                    $project : {
-                      username : 1,
-                      avatar : 1,
-                      coverImage : 1,
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              $addFields : {
-                owner : {
-                  $first : "$owner",
-                } 
-              }
-            }
-          ]
-        }
-      }
-    ])
-
+    req.user.username= username;
+    await req.user.save({validateBeforeSave: false});
     res.status(200)
     .json(
-      new ApiResponse (200, {} , "User watch history fetched successfully")
+      new ApiResponse(200, req.user, "Username updated successfully.")
     )
   }
 )
-export { uploadAvatar , uploadCoverImage, updatePassword , updateEmail, updateFullName , getChanelProfile , getWatchHistory }
+const getFollowingFollowers = asyncHandler(async (req, res) => {
+
+    const { username } = req.params;
+
+    if (!username || !username.trim()) {
+        throw new ApiError(400, "Username is required");
+    }
+
+    //Find user we are trying to view
+    const user = await User.findOne({
+        username: username.toLowerCase()
+    })
+    .select("fullName username avatar followers following");
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const followersCount = user.followers.length;
+    const followingCount = user.following.length;
+
+    //Check if logged-in user follows this user
+    const isFollowing = user.followers.includes(req.user?._id);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                fullName: user.fullName,
+                username: user.username,
+                avatar: user.avatar,
+                followersCount,
+                followingCount,
+                isFollowing,
+            },
+            "Followers and following fetched successfully"
+        )
+    );
+});
+const updateBio = asyncHandler(
+  async (req,res) => {
+    const newBio = req.body.bio
+    if(!newBio || newBio === req.user.bio){
+      throw new ApiError(400, "Please provide with a new bio.")
+    }
+    req.user.bio = newBio;
+    await req.user.save({validateBeforeSave: false});
+    res.status(200).json(
+      new ApiResponse(200, newBio, "Bio updated successfully")
+    )
+  }
+)
+const updateSocialLinks = asyncHandler(
+  async (req,res) => {
+    const { github, linkedin, twitter, website } = req.body;
+    if(!github && !linkedin && !twitter && !website){
+      throw new ApiError(400, "Please provide with at least one social link to update.")
+    }
+    if(github) req.user.socialLinks.github = github;
+    if(linkedin) req.user.socialLinks.linkedin = linkedin;
+    if(twitter) req.user.socialLinks.twitter = twitter;
+    if(website) req.user.socialLinks.website = website;
+    await req.user.save({validateBeforeSave: false});
+    res.status(200).json(
+      new ApiResponse(200, req.user.socialLinks, "Social links updated successfully")
+    )
+  }
+)
+const getUserProfile = asyncHandler(
+    async (req,res) => {
+        return res.status(200).json(
+            new ApiResponse(200, req.user, "Current User.")
+        )
+    }
+)
+export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile, updateUserName }
