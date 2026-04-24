@@ -42,7 +42,6 @@ const createPost = asyncHandler(
         )
     }
 )
-
 //view post -single
 const viewPostById = asyncHandler(
     async(req,res)=>{
@@ -60,6 +59,7 @@ const viewPostById = asyncHandler(
             .json(new ApiResponse(200, post, "Single post"));
     }
 )
+//view post -all
 const viewAllPosts = asyncHandler(
     //first get the username of the user whose post you want to see and then get its id
     //now, use Post to find all the posts by the author with that id
@@ -95,7 +95,30 @@ const editPost = asyncHandler(
 //delete post
 const deletePost = asyncHandler(
     async (req,res) => {
-        
+        //first get post id
+        const {id}= req.params;
+        const post = await Post.findById(id);
+
+        //deleting images
+        try {
+            //since images is an array we need to loop it
+            //we need to use forOf loop , for in will not work here (with forIn we get numbers- 0,1,...etc)
+            for( const image of post.images ){
+                await ImageKitService.deleteImage(image.fileId);
+            }
+            //now deleting it from mongodb
+            await Post.findOneAndDelete({
+                _id: id
+            })
+        } catch (error) {
+            throw new ApiError(404, "Post deletion failed.")
+        }
+
+        return res.status(204)
+        .json(
+            new ApiResponse(204, "", "Post deleted successfully.")
+        )
+
     }
 )
 
