@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import asyncHandler from "../utils/asyncHandler";
-import Post from "../models/post.model";
-import Engagement from "../models/engagement.model";
-import { ApiError } from "../utils/ApiError";
+import asyncHandler from "../utils/asyncHandler.js";
+import Post from "../models/post.model.js";
+import Engagement from "../models/engagement.model.js";
+import { ApiError } from "../utils/ApiError.js";
 //ensures only one like and one save per user is allowed
 const toggleEngagement = asyncHandler(
     async (userId, postId, type) => {

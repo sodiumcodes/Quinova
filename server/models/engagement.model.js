@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, {Schema} from "mongoose";
 const engagementSchema= new mongoose.Schema({
     user:{
         type: Schema.Types.ObjectId,
@@ -14,9 +14,9 @@ const engagementSchema= new mongoose.Schema({
     },
     type:{
         type: String,
-        enum: [like, save, view],
+        enum: ["like", "save", "view"],
         required: true,
-        default: view
+        default: "view"
     }
 },
 { timestamps : true })
