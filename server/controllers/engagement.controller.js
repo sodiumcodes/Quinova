@@ -3,12 +3,12 @@ import { toggleEngagement, viewCount } from '../services/engagement.service.js'
 import Post from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const toggleLike = asyncHandler(
+const toggleLike = 
     async (req,res) => {
         //get post id
         const {_id}= req.params;
          
-        const post = await Post.findOne(_id);
+        const post = await Post.findById(_id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
@@ -22,13 +22,13 @@ const toggleLike = asyncHandler(
             new ApiResponse(200, "", `Like ${result.action}`)
         );
     }
-)
+
 const toggleSave = asyncHandler(
     async (req,res) => {
         //get post id
         const {_id}= req.params;
          
-        const post = await Post.findOne(_id);
+        const post = await Post.findById(_id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
@@ -48,7 +48,7 @@ const addPostView = asyncHandler(
         //get post id
         const {_id}= req.params;
          
-        const post = await Post.findOne(_id);
+        const post = await Post.findById(_id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
