@@ -3,18 +3,18 @@ import { toggleEngagement, viewCount } from '../services/engagement.service.js'
 import Post from "../models/post.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const toggleLike = 
+const toggleLike = asyncHandler(
     async (req,res) => {
         //get post id
-        const {_id}= req.params;
+        const {id}= req.params;
          
-        const post = await Post.findById(_id);
+        const post = await Post.findById(id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
         const result = await toggleEngagement({
             userId: req.user._id,
-            postId: _id,
+            postId: id,
             type: "like"
         });
 
@@ -22,19 +22,19 @@ const toggleLike =
             new ApiResponse(200, "", `Like ${result.action}`)
         );
     }
-
+)
 const toggleSave = asyncHandler(
     async (req,res) => {
         //get post id
-        const {_id}= req.params;
+        const {id}= req.params;
          
-        const post = await Post.findById(_id);
+        const post = await Post.findById(id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
         const result = await toggleEngagement({
             userId: req.user._id,
-            postId: _id,
+            postId: id,
             type: "save"
         });
 
@@ -46,15 +46,15 @@ const toggleSave = asyncHandler(
 const addPostView = asyncHandler(
     async (req,res) => {
         //get post id
-        const {_id}= req.params;
+        const {id}= req.params;
          
-        const post = await Post.findById(_id);
+        const post = await Post.findById(id);
         if(!post){
             throw new ApiError(404, "Post not found")
         }
         const result = await viewCount({
             userId: req.user._id,
-            postId: _id,
+            postId: id,
             type: "view"
         });
 
