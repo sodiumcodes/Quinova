@@ -2,7 +2,7 @@ import express from "express";
 import upload from "../middlewares/upload.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
 import 
-{ uploadAvatar , updatePassword , updateEmail, updateFullName , toggleFollow , updateBio, updateSocialLinks, getUserProfile, updateUserName }  
+{ uploadAvatar , updatePassword , updateEmail, updateFullName , toggleFollow , updateBio, updateSocialLinks, getUserProfile, updateUserName, getFollowersAndFollowing, getFollowersList, getFollowingList }  
 from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -20,7 +20,8 @@ router.route("/:id/follow").post( toggleFollow);
 
 //get
 router.route("profile/:username").get( getUserProfile );
-
-
+router.route("/:id").get(getFollowersAndFollowing);
+router.route("/:id/followers").get(getFollowersList);
+router.route("/:id/following").get(getFollowingList);
 
 export default router;

@@ -195,7 +195,7 @@ const toggleFollow = asyncHandler(async (req, res) => {
         action= "unfollowed"
         isFollowing= false
       }
-      
+
       else{
         //create a follow object
         await Follow.create(
@@ -247,5 +247,53 @@ const toggleFollow = asyncHandler(async (req, res) => {
     );
   }
 );
+const getFollowersAndFollowing = asyncHandler(
+  async (req,res) => {
+    //need the count
+    const {id} = req.params;
+    if(!id){
+      throw new ApiError(400, "User doesnot exists.")
+    }
+    let user;
+    if(req.user._id.toString() == id){
+      user = req.user;
+    }
+    else{
+      user = await User.findById(id);
+    }
+    const countFollowing = user.followingCount;
+    const countFollowers = user.followersCount;
+    return res.status(200)
+    .json(
+      new ApiResponse(200, {countFollowers, countFollowing}, "SUCCESSFULLY FETCHED.")
+    )
+  }
+)
 
-export { uploadAvatar , updatePassword , updateEmail, updateFullName , toggleFollow , updateBio, updateSocialLinks, getUserProfile, updateUserName }
+const getFollowingList = asyncHandler(
+  async (req,res) => {
+    const {id} = req.params;
+    if(!id){
+      throw new ApiError(400, "User doesnot exists.")
+    }
+    const followers = await Follow.find({ following: id })
+    .populate("follower", "username avatar");
+     return res.status(200)
+     .json(new ApiResponse(200, followers, "followers fetched successfully."));
+  }
+)
+
+const getFollowersList = asyncHandler(
+  async (req,res) => {
+    const {id} = req.params;
+    if(!id){
+      throw new ApiError(400, "User doesnot exists.")
+    }
+    const following = await Follow.find({ followers: id })
+    .populate("following", "username avatar");
+     return res.status(200)
+     .json(new ApiResponse(200, following, "following fetched successfully."));
+  }
+)
+
+export { uploadAvatar , updatePassword , updateEmail, updateFullName , toggleFollow , updateBio, updateSocialLinks, getUserProfile, updateUserName , getFollowersAndFollowing, getFollowersList, getFollowingList }
