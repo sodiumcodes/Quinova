@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import User from "./user.model";
+import mongoose, { Schema } from "mongoose";
+import User from "./user.model.js";
 const followSchema = new mongoose.Schema(
     {
         //the one who is following

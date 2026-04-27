@@ -4,6 +4,8 @@ import { ApiError } from '../utils/ApiError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import mongoose from 'mongoose';
+import Follow from "../models/follow.model.js";
+import { login } from "./auth.controller.js";
 
 const uploadAvatar = asyncHandler(
   async (req,res) => {
@@ -102,45 +104,6 @@ const updateUserName = asyncHandler(
     )
   }
 )
-const getFollowingFollowers = asyncHandler(async (req, res) => {
-
-    const { username } = req.params;
-
-    if (!username || !username.trim()) {
-        throw new ApiError(400, "Username is required");
-    }
-
-    //Find user we are trying to view
-    const user = await User.findOne({
-        username: username.toLowerCase()
-    })
-    .select("fullName username avatar followers following");
-
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    const followersCount = user.followers.length;
-    const followingCount = user.following.length;
-
-    //Check if logged-in user follows this user
-    const isFollowing = user.followers.includes(req.user?._id);
-
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                fullName: user.fullName,
-                username: user.username,
-                avatar: user.avatar,
-                followersCount,
-                followingCount,
-                isFollowing,
-            },
-            "Followers and following fetched successfully"
-        )
-    );
-});
 const updateBio = asyncHandler(
   async (req,res) => {
     const newBio = req.body.bio
@@ -177,4 +140,112 @@ const getUserProfile = asyncHandler(
         )
     }
 )
-export { uploadAvatar , updatePassword , updateEmail, updateFullName ,  getFollowingFollowers , updateBio, updateSocialLinks, getUserProfile, updateUserName }
+const toggleFollow = asyncHandler(async (req, res) => {
+
+  //get id from params 
+    const {id}= req.params; 
+
+  //check if its the same as req.user._id
+    //req.user._id is new ObjectId('69e9b47b74db958a0ade82e2'), we need the string only so thats why toString()
+
+    if(req.user._id.toString() === id){
+      throw new ApiError(400, "User cannot follow herself.")
+    }
+  //now find the target from User model
+    const target = await User.findById(id); //user2 search
+  //check if target exists
+    if(!target){
+      throw new ApiError(400, "User doesnot exists.")
+    }
+    let action ="followed";
+    let isFollowing = true;
+  //taking care of the toggle in transaction 
+    const session = await mongoose.startSession();
+    try {
+      await session.startTransaction();
+
+      //check if target is in follow model
+      // const exists = await Follow.findById(id); --> need to look for it using both ids
+      const exists = await Follow.findOne({
+        followers: req.user._id,
+        following: id
+      }).session(session);
+      
+      if(exists){
+        //delete follow object
+        await Follow.deleteOne({
+          _id: exists._id
+        }, {session})
+
+        //dec count in both users
+        await User.updateOne(
+          {_id : id},
+          {$inc:
+              {followersCount : -1}
+          },
+          {session}
+        )
+        await User.updateOne(
+          {_id : req.user._id},
+          {$inc:
+              {followingCount: -1}          
+          },
+          {session}
+        )
+        action= "unfollowed"
+        isFollowing= false
+      }
+      
+      else{
+        //create a follow object
+        await Follow.create(
+          [{ followers: req.user._id, following: id }],
+          {session}
+        )
+        //update both users
+        //user getting followed
+        await User.updateOne(
+          {_id : id},
+          {$inc:
+              {followersCount : 1}
+          },
+          {session}
+        )
+        //user following
+        await User.updateOne(
+          {_id : req.user._id},
+          {$inc:
+              {followingCount: 1}
+          },
+          {session}
+        )
+        action= "followed"
+        isFollowing= true
+      }
+      await session.commitTransaction(); 
+    } catch (error) {
+      await session.abortTransaction()
+      throw new ApiError(400, "Unable to follow/unfollow.")
+    }
+    finally{
+      await session.endSession();
+    }
+  
+    
+    return res.status(200).json(
+      new ApiResponse( 200,
+        {
+          fullName: req.user.fullName,
+          username: req.user.username,
+          avatar: req.user.avatar,
+          followersCount: target.followersCount,
+          followingCount: target.followingCount,
+          isFollowing,
+        },
+        `${req.user.username} ${action}`
+      )
+    );
+  }
+);
+
+export { uploadAvatar , updatePassword , updateEmail, updateFullName , toggleFollow , updateBio, updateSocialLinks, getUserProfile, updateUserName }
