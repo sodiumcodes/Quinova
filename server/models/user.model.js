@@ -40,18 +40,19 @@ const userSchema = new mongoose.Schema({
         twitter: { type: String, default: "" },
         website: { type: String, default: "" }
     },
-    following: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-        }
-    ],
-    followers: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-        }
-    ],
+    followersCount: {
+        type: Number,
+        default: 0
+    },
+
+    followingCount: {
+        type: Number,
+        default: 0
+    },
+    postsCount: {
+        type: Number,
+        default: 0
+    },
     refreshToken:{
         type:String,
     },
