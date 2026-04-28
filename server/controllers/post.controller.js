@@ -15,27 +15,46 @@ const createPost = asyncHandler(
         if(!images){
             throw new ApiError(400, "Can't create an empty post.");
         }
-        //storing images
-        const imageArray = [];
-        for(const image of images){
-            const uploaded = await ImageKitService.uploadImage(
-                image.buffer.toString("base64"),
-                image.originalname,
-                "posts"
+        let post;
+        const session = await mongoose.startSession();
+        try {
+            await session.startTransaction();
+            //storing images
+            const imageArray = [];
+            for(const image of images){
+                const uploaded = await ImageKitService.uploadImage(
+                    image.buffer.toString("base64"),
+                    image.originalname,
+                    "posts"
+                )
+                imageArray.push({
+                    url: uploaded.url,
+                    fileId: uploaded.fileId,
+                });
+            }
+            //post creation
+            post = await Post.create({
+                caption: caption,
+                tags: tags,
+                images: imageArray,
+                author: req.user._id
+            })
+            await post.save({ session }); 
+            await User.updateOne({ _id: req.user._id},
+                {$inc : {
+                    postsCount : 1
+                }},
+                {session}
             )
-            imageArray.push({
-                url: uploaded.url,
-                fileId: uploaded.fileId,
-            });
+            await session.commitTransaction();
+        } 
+        catch (error) {
+            await session.abortTransaction;
+            throw new ApiError(400, "unable to create post.")
+        }   
+        finally{
+            await session.endSession();
         }
-        
-        //post creation
-        const post = await Post.create({
-            caption: caption,
-            tags: tags,
-            images: imageArray,
-            author: req.user._id
-        })
         res.status(201)
         .json(
             new ApiResponse(201, post ,"post create succesfully.")
@@ -120,11 +139,12 @@ const editTag = asyncHandler(
 const deletePost = asyncHandler(
     async (req,res) => {
         //first get post id
-        const {id}= req.params;
+        const {id} = req.params //post id
         const post = await Post.findById(id);
-
+        const session = await mongoose.startSession();
         //deleting images
         try {
+            await session.startTransaction();
             //since images is an array we need to loop it
             //we need to use forOf loop , for in will not work here (with forIn we get numbers- 0,1,...etc)
             for( const image of post.images ){
@@ -133,16 +153,27 @@ const deletePost = asyncHandler(
             //now deleting it from mongodb
             await Post.findOneAndDelete({
                 _id: id
-            })
+            }, {session})
+
+            await User.updateOne({ _id: req.user._id},
+                {$inc : {
+                    postsCount : -1
+                }},
+                {session}
+            )
+            await session.commitTransaction();
+
         } catch (error) {
+            await session.abortTransaction();
             throw new ApiError(404, "Post deletion failed.")
         }
-
+        finally{
+            await session.endSession();
+        }
         return res.status(204)
         .json(
             new ApiResponse(204, "", "Post deleted successfully.")
         )
-
     }
 )
 
