@@ -8,7 +8,7 @@ class ImageKitService {
       const response = await imagekit.files.upload({
         file: fileBuffer,     
         fileName: fileName, 
-        folder: `youtube_backend/${folder}`       // folder inside ImageKit
+        folder: `quinova/${folder}`       // folder inside ImageKit
       });
 
       return {
@@ -22,6 +22,7 @@ class ImageKitService {
   }
   static async deleteImage(fileId){
     try{
+      console.log("image deletion in process.");
       await imagekit.files.delete(fileId);
     }
     catch(error){
