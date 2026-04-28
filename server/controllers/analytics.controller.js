@@ -1,4 +1,5 @@
 import Post from "../models/post.model.js";
+import Engagement from "../models/engagement.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -89,4 +90,57 @@ const getTopPosts = asyncHandler(
         )
     }
 )
-export { getUserAnalytics , getPostAnalytics , getTopPosts};
+const getGrowthAnalytics = asyncHandler(async (req, res) => {
+    const userPosts = await Post.find({author: req.user._id}).select("_id");
+    if(userPosts.length===0){
+        throw new ApiError(400, "No posts created by the user.")
+    }
+    const postIds = userPosts.map(p=>p._id);
+    
+    const growth = await Engagement.aggregate([
+        {
+            $match: {
+                post : {$in : postIds}
+            }
+        },
+        {
+           $group: {
+                _id: {
+                date: {
+                    $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$createdAt"
+                    }
+                },
+                type: "$type"
+                },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $group: {
+                _id: "$_id.date",
+                likes : {
+                    $sum : {
+                        $cond: [{ $eq: ["$_id.type", "like"] }, "$count", 0]
+                    }
+                },
+                saves : {
+                    $sum : {
+                        $cond: [{ $eq: ["$_id.type", "save"] }, "$count", 0]
+                    }
+                },
+                views : {
+                    $sum : {
+                        $cond: [{ $eq: ["$_id.type", "view"] }, "$count", 0]
+                    }
+                }
+            }
+        },
+        { $sort: { _id: 1 } }
+    ])
+    console.log(growth);
+    
+    return res.json(new ApiResponse(200, growth));
+});
+export { getUserAnalytics , getPostAnalytics , getTopPosts , getGrowthAnalytics};
