@@ -30,7 +30,7 @@ const getUserAnalytics = asyncHandler(
             totalSaves : 0,
             totalViews : 0
         }
-        const engagementRate = (stats.totalViews === 0)? 0 : (stats.totalLikes + stats.totalSaves) / stats.totalViews
+        const engagementRate = (stats.totalViews === 0)? 0 : ((stats.totalLikes + stats.totalSaves) / stats.totalViews) * 100
         
         return res.status(200)
         .json(
@@ -45,4 +45,22 @@ const getUserAnalytics = asyncHandler(
     }   
 )
 
-export { getUserAnalytics };
+const getPostAnalytics = asyncHandler(
+    async (req, res) => {
+        const {id} = req.params;
+        const post = await Post.findById(id);
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+       
+        const engagementRate = (post.viewsCount === 0) ? 0 : ((post.likesCount + post.savesCount) / post.viewsCount)*100 ; 
+        
+        return res.status(200)
+        .json(
+            new ApiResponse(200, {
+            engagementRate: Number(engagementRate.toFixed(2))
+            })
+        )
+    }
+)
+export { getUserAnalytics , getPostAnalytics};
