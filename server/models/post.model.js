@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
             default:"",
             trim:true,
         },
-         images:[
+        images:[
             {
                 url: 
                 { 
@@ -31,7 +31,7 @@ const postSchema = new mongoose.Schema({
             default:0,
             type:Number,
         },
-        commentsCount:{
+        viewsCount:{
             default:0,
             type:Number,
         },
