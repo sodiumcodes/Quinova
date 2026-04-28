@@ -44,6 +44,10 @@ const postSchema = new mongoose.Schema({
             ref: "User",
             required: true
         },
+        engagementRate : {
+            type: Number,
+            default:0
+        }
     },
     {
         timestamps : true

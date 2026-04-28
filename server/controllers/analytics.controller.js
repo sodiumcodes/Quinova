@@ -54,7 +54,13 @@ const getPostAnalytics = asyncHandler(
         }
        
         const engagementRate = (post.viewsCount === 0) ? 0 : ((post.likesCount + post.savesCount) / post.viewsCount)*100 ; 
-        
+        await Post.updateOne({
+            _id: id
+            }, 
+            {
+                engagementRate: engagementRate
+            }
+        )
         return res.status(200)
         .json(
             new ApiResponse(200, {
@@ -63,4 +69,24 @@ const getPostAnalytics = asyncHandler(
         )
     }
 )
-export { getUserAnalytics , getPostAnalytics};
+
+const getTopPosts = asyncHandler(
+    async (req, res) => {
+        const id = req.user._id;
+        const topPosts = await Post.find({author: id})
+                                .sort({engagementRate : -1})
+                                .limit(5);
+        
+        if(topPosts.length < 5){
+            return res.status(200)
+                    .json(
+                        new ApiResponse(200, "", "Kindly create more posts to see analytics.")
+                    )
+        }                        
+        return res.status(200)
+        .json(
+            new ApiResponse(200, Posts, "Top five posts Retrived succefully")
+        )
+    }
+)
+export { getUserAnalytics , getPostAnalytics , getTopPosts};
