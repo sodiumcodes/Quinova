@@ -1,0 +1,33 @@
+import { ApiError } from "../utils/ApiError.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import Post from "../models/post.model.js"
+import { ApiResponse } from "../utils/ApiResponse.js";
+const getPostByTag = asyncHandler(
+    async (req,res) => {
+        //get the tag from query string
+        const {tag, page =1, limit =10} = req.query;
+        //check if tag is empty or not
+        if(!tag){
+            throw new ApiError(400, "No such tag exists");
+        }
+        //add # to tag
+        let tagModified = "#" + tag;
+        
+        //With skip (proper pagination)
+        let skip =( page-1 )*10;
+
+        //we are not sorting here
+        const posts = await Post.find({tags: tagModified})
+                                .skip(skip) //first 1-10 then 11-20 then 21-30 and so on
+                                .limit(Number(limit))
+                                .populate("author", "avatar username")
+        console.log(posts);
+        
+        return res.status(200)
+        .json(
+            new ApiResponse(200, posts, "all posts with the given tag fetched.")
+        )
+    }
+)
+
+export {getPostByTag}

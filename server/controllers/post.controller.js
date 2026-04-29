@@ -18,6 +18,7 @@ const createPost = asyncHandler(
         let post;
         const session = await mongoose.startSession();
         try {
+            
             await session.startTransaction();
             //storing images
             const imageArray = [];
@@ -39,6 +40,7 @@ const createPost = asyncHandler(
                 images: imageArray,
                 author: req.user._id
             })
+            
             await post.save({ session }); 
             await User.updateOne({ _id: req.user._id},
                 {$inc : {
@@ -50,7 +52,7 @@ const createPost = asyncHandler(
         } 
         catch (error) {
             await session.abortTransaction;
-            throw new ApiError(400, "unable to create post.")
+            throw new ApiError(400, "unable to create post.", error)
         }   
         finally{
             await session.endSession();
