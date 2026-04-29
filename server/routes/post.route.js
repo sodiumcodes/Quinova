@@ -8,6 +8,7 @@ router.use(verifyUser);
 //post 
 router.route("/create").post(upload.array("posts", 5), createPost);//working
 router.route("/feature/:id").post(toggleFeature);
+
 //get
 router.route("/single/:id").get(viewPostById);
 router.route("/all/:username").get(viewAllPosts);
