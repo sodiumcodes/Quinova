@@ -96,7 +96,7 @@ const updateUserName = asyncHandler(
     if(req.user.username === username){
       throw new ApiError(400, "Username is same as before. It should be new.")
     }
-    req.user.username= username;
+    req.user.username= username.toLowerCase();
     await req.user.save({validateBeforeSave: false});
     res.status(200)
     .json(
