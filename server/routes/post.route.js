@@ -1,7 +1,7 @@
 import Router from "express"
 import upload from "../middlewares/upload.middleware.js";
 import { verifyUser } from "../middlewares/auth.middleware.js";
-import { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost , toggleFeature } from "../controllers/post.controller.js";
+import { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost, toggleFeature } from "../controllers/post.controller.js";
 const router = Router();
 
 router.use(verifyUser);
