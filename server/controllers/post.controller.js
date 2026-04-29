@@ -176,5 +176,22 @@ const deletePost = asyncHandler(
         )
     }
 )
+const toggleFeature = asyncHandler(
+    async(req, res)=>{
+        const {id} = req.params;// post id
+        const post = await Post.findById(id);
+        if(!post){
+            throw new ApiError(400, "Post doesnot exists.");
+        }
 
-export { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost }
+        if(post.isFeatured) post.isFeatured = false;
+        else post.isFeatured = true;
+
+        post.save({validateBeforeSave: false});
+        return res.status(200)
+        .json(
+            new ApiResponse(200,  post.isFeatured, "The post is featured." )
+        )
+    }
+)
+export { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost , toggleFeature }

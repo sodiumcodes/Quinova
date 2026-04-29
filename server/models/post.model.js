@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
             default:"",
             trim:true,
         },
-         images:[
+        images:[
             {
                 url: 
                 { 
@@ -44,6 +44,10 @@ const postSchema = new mongoose.Schema({
             ref: "User",
             required: true
         },
+        isFeatured:{
+            type: Boolean,
+            default: false,
+        }
     },
     {
         timestamps : true
