@@ -62,6 +62,7 @@ postSchema.pre("save", function () {
             .filter(tag => tag.length > 0) // remove empty
             .map(tag => tag.toLowerCase().trim()); // normalize
     }
+    
 });
 
 //to understand map and flat map better

@@ -5,6 +5,6 @@ const router = Router();
 
 router.use(verifyUser);
 
-router.route("/posts").get(getPostByTag);
+router.route("/posts").get(getPostByTag); 
 
 export default router;

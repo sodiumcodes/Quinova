@@ -16,7 +16,7 @@ const getPostByTag = asyncHandler(
         //With skip (proper pagination)
         let skip =( page-1 )*10;
 
-        //we are not sorting here
+        //we are not sorting here 
         const posts = await Post.find({tags: tagModified})
                                 .skip(skip) //first 1-10 then 11-20 then 21-30 and so on
                                 .limit(Number(limit))
