@@ -18,6 +18,7 @@ const createPost = asyncHandler(
         let post;
         const session = await mongoose.startSession();
         try {
+            
             await session.startTransaction();
             //storing images
             const imageArray = [];
@@ -39,6 +40,7 @@ const createPost = asyncHandler(
                 images: imageArray,
                 author: req.user._id
             })
+            
             await post.save({ session }); 
             await User.updateOne({ _id: req.user._id},
                 {$inc : {
@@ -50,7 +52,7 @@ const createPost = asyncHandler(
         } 
         catch (error) {
             await session.abortTransaction;
-            throw new ApiError(400, "unable to create post.")
+            throw new ApiError(400, "unable to create post.", error)
         }   
         finally{
             await session.endSession();
@@ -176,22 +178,5 @@ const deletePost = asyncHandler(
         )
     }
 )
-const toggleFeature = asyncHandler(
-    async(req, res)=>{
-        const {id} = req.params;// post id
-        const post = await Post.findById(id);
-        if(!post){
-            throw new ApiError(400, "Post doesnot exists.");
-        }
 
-        if(post.isFeatured) post.isFeatured = false;
-        else post.isFeatured = true;
-
-        post.save({validateBeforeSave: false});
-        return res.status(200)
-        .json(
-            new ApiResponse(200,  post.isFeatured, "The post is featured." )
-        )
-    }
-)
-export { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost , toggleFeature }
+export { createPost, viewPostById, viewAllPosts, editImages, editCaption, editTag, deletePost }

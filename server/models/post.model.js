@@ -6,7 +6,7 @@ const postSchema = new mongoose.Schema({
             default:"",
             trim:true,
         },
-        images:[
+         images:[
             {
                 url: 
                 { 
@@ -44,14 +44,31 @@ const postSchema = new mongoose.Schema({
             ref: "User",
             required: true
         },
-        isFeatured:{
-            type: Boolean,
-            default: false,
-        }
     },
     {
         timestamps : true
     }
 );
+
+postSchema.index({ tags: 1 });
+
+//only lowercase tags allowed
+postSchema.pre("save", function () {
+    if (this.tags && Array.isArray(this.tags)) {
+        this.tags = this.tags
+            .flatMap(tag =>
+                tag.split(/\s+/) // split by spaces 
+            )//return [elements] in one level (flatens array)
+            .filter(tag => tag.length > 0) // remove empty
+            .map(tag => tag.toLowerCase().trim()); // normalize
+    }
+});
+
+//to understand map and flat map better
+/*
+    let array = ["abc bcd cde", "def efg fgh"];
+    console.log(array.map(a=>a.split(/\s+/)));
+    console.log(array.flatMap(a=>a.split(/\s+/)));
+*/
 const Post = mongoose.model("Post", postSchema);
 export default Post;

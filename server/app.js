@@ -24,11 +24,11 @@ import userRoute from './routes/user.route.js';
 import authRouter from './routes/auth.route.js';
 import postRouter from './routes/post.route.js';
 import engagementRouter from './routes/engagement.route.js'
-
+import discoveryRouter from './routes/discovery.route.js';
 //routes declaration
 app.use('/api/v1/user', userRoute);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/post', postRouter);
 app.use('/api/v1', engagementRouter);
-
+app.use('/api/v1/discover', discoveryRouter);
 export default app;
