@@ -31,7 +31,7 @@ const postSchema = new mongoose.Schema({
             default:0,
             type:Number,
         },
-        commentsCount:{
+        viewsCount:{
             default:0,
             type:Number,
         },
@@ -44,10 +44,14 @@ const postSchema = new mongoose.Schema({
             ref: "User",
             required: true
         },
+        engagementRate : {
+            type: Number,
+            default:0
+        },
         isFeatured:{
             type: Boolean,
             default: false,
-        }  
+        } 
     },
     {
         timestamps : true
