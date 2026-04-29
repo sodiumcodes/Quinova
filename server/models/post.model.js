@@ -57,5 +57,17 @@ const postSchema = new mongoose.Schema({
         timestamps : true
     }
 );
+
+//without index: Scan → filter → sort 
+//!with index: direct lookup
+postSchema.index({
+    author: -1,
+    isFeatured:-1,
+    createdAt:-1
+})
+postSchema.index({
+    author: -1,
+    engagementRate:-1
+})
 const Post = mongoose.model("Post", postSchema);
 export default Post;
