@@ -8,7 +8,7 @@ const collectionSchema = new mongoose.Schema({
     },
     author:{
         type: Schema.Types.ObjectId,
-        ref: User,
+        ref: "User",
         required: true,
         index: true
     },
