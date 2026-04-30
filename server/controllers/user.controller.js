@@ -235,14 +235,14 @@ const toggleFollow = asyncHandler(async (req, res) => {
     return res.status(200).json(
       new ApiResponse( 200,
         {
-          fullName: req.user.fullName,
-          username: req.user.username,
-          avatar: req.user.avatar,
+          fullName: target.fullName,
+          username: target.username,
+          avatar: target.avatar,
           followersCount: target.followersCount,
           followingCount: target.followingCount,
           isFollowing,
         },
-        `${req.user.username} ${action}`
+        `${req.user.username} ${action} ${target.username}`
       )
     );
   }
