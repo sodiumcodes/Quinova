@@ -2,6 +2,7 @@ import { ApiError } from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import Post from "../models/post.model.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
+import User from "../models/user.model.js";
 const getPostByTag = asyncHandler(
     async (req,res) => {
         //get the tag from query string
@@ -29,5 +30,34 @@ const getPostByTag = asyncHandler(
         )
     }
 )
+const searchUser = asyncHandler(
+    async (req,res) => {
+        const {username, page =1, limit=10} = req.query;
+        username = username.trim().toLowerCase();
+        let user = req.user;
+        if(!username === user.username ){
+            user = await User.findOne({username: username});
+        }
+        // !pagination
+        const skip = (page - 1) * limit;
+        /*
+         * Regex search:
+         * - partial match
+         * - case-insensitive 
+        */
+       const users = await User.find({
+            username: { $regex: `^${username}`} // * starts comparing from the begining
+            // * username: { $regex: username}} --> substring search 
+       })
+       .select("avatar username")
+       .sort({username: 1})
+       .skip(skip)
+       .limit(Number(limit));
 
-export {getPostByTag}
+       return res.status(200)
+       .json(
+        new ApiResponse(200, users, `Search results for ${username}`)
+       )
+    }
+)
+export {getPostByTag, searchUser}
