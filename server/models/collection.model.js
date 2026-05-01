@@ -1,6 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 import User from "./user.model.js";
-const collectionSchema = new mongoose.Schema({
+const collectionsSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -14,7 +14,7 @@ const collectionSchema = new mongoose.Schema({
     },
     isDefault:{
         type: Boolean,
-        default: true,
+        default: false,
     },
     isPrivate:{
         type: Boolean,
@@ -23,9 +23,9 @@ const collectionSchema = new mongoose.Schema({
 },
 { timestamps: true })
 
-collectionSchema.index(
+collectionsSchema.index(
     {author:1 , isDefault:1},
     { unique: true, partialFilterExpression: { isDefault: true }}
 )
-const Collection = mongoose.model("Collection", collectionSchema);
-export default Collection;
+const Collections = mongoose.model("Collections", collectionsSchema);
+export default Collections;

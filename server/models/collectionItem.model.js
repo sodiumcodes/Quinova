@@ -1,11 +1,11 @@
 import mongoose, {Schema} from "mongoose";
 import User from "./user.model.js";
 import Post from "./post.model.js"
-import Collection from "./collection.model.js";
+import Collections from "./collection.model.js";
 const collectionItemSchema = new mongoose.Schema({
-    collection :{
+    collections :{
         type: Schema.Types.ObjectId,
-        ref: "Collection",
+        ref: "Collections",
         required: true,
         index: true
     },
@@ -29,7 +29,7 @@ const collectionItemSchema = new mongoose.Schema({
 { timestamps: true })
 
 collectionItemSchema.index(
-    {collection:1 , post:1},
+    {collections:1 , post:1},
     { unique: true}
 )
 const CollectionItem = mongoose.model("CollectionItem", collectionItemSchema);

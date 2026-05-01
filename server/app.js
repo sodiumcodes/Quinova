@@ -27,6 +27,7 @@ import engagementRouter from './routes/engagement.route.js'
 import analyticsRouter from './routes/analytics.route.js';
 import portfolioRouter from './routes/portfolio.route.js';
 import discoveryRouter from './routes/discovery.route.js'; 
+import collectionRouter from './routes/collection.route.js'
 
 //routes declaration
 app.use('/api/v1/user', userRoute);
@@ -36,5 +37,6 @@ app.use('/api/v1', engagementRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/portfolio', portfolioRouter);
 app.use('/api/v1/discover', discoveryRouter); 
+app.use('/api/v1/collection', collectionRouter);
 
 export default app;
