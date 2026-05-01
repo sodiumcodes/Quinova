@@ -3,6 +3,7 @@ import CollectionItem from "../models/collectionItem.model.js"
 import asyncHandler from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+
 const createCollection = asyncHandler(
     async (req, res) => {
         const {name} = req.params;
@@ -27,9 +28,41 @@ const getCollections= asyncHandler(
 )
 const deleteCollection = asyncHandler(
     async (req, res) => {
+        const {name} = req.params;
+        console.log(name);
         
+        if(!name.trim()){
+            throw new ApiError(400, "Please enter a valid collections name.")
+        }
+        const removed = await Collections.findOneAndDelete({
+            name : name.trim()
+        });
+        if(removed){
+            throw new ApiError(400, `Cannot delete Collection : ${name}.`)
+        }
+        return res.status(204)
+        .json(new ApiResponse(204, name, `Collection : ${name} deleted successfully.`))
     }
 )
+const updateCollectionName = asyncHandler(
+    async (req, res) => {
+        const {name} = req.params;
+        if(!name.trim()){
+            throw new ApiError(400, "Please enter a valid collections name.")
+        }
+        const newName = await Collections.findOneAndUpdate({
+            name : name.trim()
+        },
+        {
+            name : req.body.name
+        });
+        console.log(newName);
+        
+        return res.status(200)
+        .json(new ApiResponse(200, name, `Collection : ${name} updated successfully to ${req.body.name}.`))
+    }
+)
+//collectionItems Controllers
 const saveToDefault = asyncHandler(
     async (req, res) => {
         
@@ -56,4 +89,4 @@ const getCollectionItems = asyncHandler(
     }
 )
 
-export { createCollection , getCollections , deleteCollection , saveToDefault , addToCollection , removeFromCollection , updateNote , getCollectionItems }
+export { createCollection , getCollections , deleteCollection , updateCollectionName , saveToDefault , addToCollection , removeFromCollection , updateNote , getCollectionItems }
