@@ -18,7 +18,7 @@ router.route("/update-name/:id").patch(updateCollectionName);
 //collectionItems routes
 
 router.route("/item/save").post(saveItemToCollection);
-router.route("/item/all").get(getCollectionItems);
+router.route("/item/all/:name").get(getCollectionItems);
 router.route("/item/update-note/:id").patch(updateItemNote);
 router.route("/item/remove/:id").delete(removeItemFromCollection);
 export default router;

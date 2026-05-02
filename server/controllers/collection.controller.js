@@ -112,7 +112,16 @@ const updateItemNote = asyncHandler(
 )
 const getCollectionItems = asyncHandler(
     async (req, res) => {
-        
+        const {name} = req.params;
+        const collectionId = await Collections.findOne({name: name.trim()});
+        const posts = await CollectionItem.find({collections: collectionId}).select("post note addedBy -_id");
+        if(!posts){
+            throw new ApiError(400, "No posts found.")
+        }
+        return res.status(200)
+        .json(
+            new ApiResponse(200, posts, `${name}: posts`)
+        )
     }
 )
 
