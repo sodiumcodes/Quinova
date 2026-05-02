@@ -4,6 +4,7 @@ const commentSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: "Post",
         required: true,
+        index: true
     },
     createdBy:{
         type: Schema.Types.ObjectId,
@@ -17,6 +18,10 @@ const commentSchema = new mongoose.Schema({
         trim: true,
     }
 })
+
+// *Index for fast fetching (post comments sorted by latest)
+
+commentSchema.index({ post: 1, createdAt: -1 });
 
 const Comment = mongoose.model("Comment", commentSchema);
 export default Comment;
