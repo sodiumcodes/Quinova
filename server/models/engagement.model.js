@@ -14,7 +14,7 @@ const engagementSchema= new mongoose.Schema({
     },
     type:{
         type: String,
-        enum: ["like", "save", "view"],
+        enum: ["like", "save", "view", "comment"],
         required: true,
         default: "view"
     }
