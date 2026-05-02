@@ -63,24 +63,51 @@ const updateCollectionName = asyncHandler(
     }
 )
 //collectionItems Controllers
-const saveToDefault = asyncHandler(
+const saveItemToCollection = asyncHandler(
     async (req, res) => {
-        
+        const {nameC} = req.query;
+
+        if(!nameC.trim()){
+            throw new ApiError(400, "Invalid Collection Name. Please enter a valid name.")
+        }
+        const collectionName = await Collections.findOne({name: nameC.trim()}); 
+        const saved = await CollectionItem.create({
+            collections: collectionName._id,
+            post: req.body.postId,
+            addedBy: req.user._id 
+        })
+        return res.status(201)
+        .json(new ApiResponse(201, saved, `Item added to ${nameC} collection.`))
     }
 )
-const addToCollection = asyncHandler(
+const removeItemFromCollection = asyncHandler(
     async (req, res) => {
-        
+        const{id} = req.params;
+        const removed = await CollectionItem.findByIdAndDelete({
+            _id: id
+        })
+        return res.status(204)
+        .json(
+            new ApiResponse(204, null,  "Post removed successfully.")
+        )
     }
 )
-const removeFromCollection = asyncHandler(
+const updateItemNote = asyncHandler(
     async (req, res) => {
-        
-    }
-)
-const updateNote = asyncHandler(
-    async (req, res) => {
-        
+        const {id} = req.params;
+        const note = req.body.note;
+        if(!note){
+            throw new ApiError(400, "Please enter a new note.")
+        }
+        const updatedItem = await CollectionItem.findByIdAndUpdate(
+            id,                        
+            { note: note },
+        );
+        if (!updatedItem) {
+            throw new ApiError(404, "Collection item not found.");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200, note , "Note updated successfully."))
     }
 )
 const getCollectionItems = asyncHandler(
@@ -89,4 +116,4 @@ const getCollectionItems = asyncHandler(
     }
 )
 
-export { createCollection , getCollections , deleteCollection , updateCollectionName , saveToDefault , addToCollection , removeFromCollection , updateNote , getCollectionItems }
+export { createCollection , getCollections , deleteCollection , updateCollectionName , saveItemToCollection , removeItemFromCollection , updateItemNote , getCollectionItems }
