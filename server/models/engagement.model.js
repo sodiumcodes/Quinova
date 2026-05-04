@@ -30,7 +30,7 @@ engagementSchema.index({
 },{
     unique:true,
     partialFilterExpression:{
-        type:{$in: ["like", "save"]}
+        type:{$in: ["like", "save", "comment"]}
     }
 })
 const Engagement = mongoose.model("Engagement", engagementSchema);
