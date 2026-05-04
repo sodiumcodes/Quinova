@@ -56,7 +56,32 @@ const removeComment = asyncHandler(
 
 const editComment = asyncHandler(
     async (req,res) => {
-        
+        //comment id
+        const{id} = req.params;
+        const comment = await Comment.findById({_id: id})
+        //! Ownership check
+        if (!comment.user.equals(req.user._id)) {
+            throw new ApiError(403, "Unauthorized");
+        }
+
+        //! Time check (30 minutes)
+        const now = new Date();
+        const createdTime = new Date(comment.createdAt);
+
+        const diffInMs = now - createdTime; //mili seconds -> minutes
+        const diffInMinutes = diffInMs / (1000 * 60);
+        //check time
+        if(diffInMinutes<=30){
+            const commentContent= req.body.content.trim();
+            if(!commentContent){
+                 throw new ApiError(400, "Edited comment cannot be blank.");
+            }
+            comment.content = commentContent;
+            await comment.save({validateBeforeSave: false});
+            return res.status(200)
+            .json(new ApiResponse(200, commentContent, "Comment edited successfully."));
+        }
+        throw new ApiError(400, "Cannot edit after 30 minutes");
     }
 )
 
