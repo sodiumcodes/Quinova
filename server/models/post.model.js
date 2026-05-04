@@ -31,6 +31,10 @@ const postSchema = new mongoose.Schema({
             default:0,
             type:Number,
         },
+        commentsCount:{
+            default: 0,
+            type: Number
+        },
         viewsCount:{
             default:0,
             type:Number,

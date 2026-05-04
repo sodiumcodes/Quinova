@@ -92,8 +92,10 @@ const viewAllPosts = asyncHandler(
         // const currUser = await User.find({username})
 
         //findOne returns an object
-        const currUser = await User.findOne({username})
-        
+        const currUser = await User.findOne({username}).select("_id")
+        if (!currUser) {
+            throw new ApiError(404, "User not found");
+        }
         const posts = await Post.find({ author: currUser._id }).sort({createdAt:-1})
         
         if(posts.length===0){
