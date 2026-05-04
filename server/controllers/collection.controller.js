@@ -29,15 +29,16 @@ const getCollections= asyncHandler(
 const deleteCollection = asyncHandler(
     async (req, res) => {
         const {name} = req.params;
-        console.log(name);
         
         if(!name.trim()){
             throw new ApiError(400, "Please enter a valid collections name.")
         }
-        const removed = await Collections.findOneAndDelete({
-            name : name.trim()
-        });
-        if(removed){
+        try{
+            const removed = await Collections.findOneAndDelete({
+                name : name.trim()
+            });
+        }
+        catch(error){
             throw new ApiError(400, `Cannot delete Collection : ${name}.`)
         }
         return res.status(204)
@@ -114,7 +115,7 @@ const getCollectionItems = asyncHandler(
     async (req, res) => {
         const {name} = req.params;
         const collectionId = await Collections.findOne({name: name.trim()});
-        const posts = await CollectionItem.find({collections: collectionId}).select("post note addedBy -_id");
+        const posts = await CollectionItem.find({collections: collectionId}).select("post note addedBy");
         if(!posts){
             throw new ApiError(400, "No posts found.")
         }
