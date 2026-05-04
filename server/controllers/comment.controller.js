@@ -1,9 +1,12 @@
+import mongoose from "mongoose";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Comment from "../models/comment.model.js"
 import Engagement from "../models/engagement.model.js";
 import Post from "../models/post.model.js";
+import LikeComment from "../models/commentLike.model.js";
+
 const createComment = asyncHandler(
     async (req,res) => {
         //post id
@@ -30,6 +33,10 @@ const createComment = asyncHandler(
         },{
             $inc:{commentsCount: 1}
         })
+        await LikeComment.create({
+            user: req.user._id,
+            comment: comment._id
+        })
         return res.status(201)
         .json(new ApiResponse(201, comment, "Comment created successfully."))
     }
@@ -37,18 +44,30 @@ const createComment = asyncHandler(
 
 const removeComment = asyncHandler(
     async (req,res) => {
+        //comment id
         const {id} = req.params;
         const comment = await Comment.findByIdAndDelete({
             _id: id
         }).select("post")
+
+        await Post.findOneAndUpdate({
+            _id: id
+        },{
+            $inc:{commentsCount: 1}
+        })
         await Engagement.findOneAndDelete({
-            post: comment.post
+            post: comment.post,
+            user: req.user._id,
         })
         await Post.findOneAndUpdate({
             _id: id
         },{
             $inc:{commentsCount: -1}
         })  
+        await LikeComment.deleteOne({
+            user: req.user._id,
+            comment: comment._id
+        })
         return res.status(204)
         .json(new ApiResponse(204, "", "Comment deleted successfully."))
     }
@@ -85,4 +104,76 @@ const editComment = asyncHandler(
     }
 )
 
-export {createComment, removeComment, editComment};
+const toggleLikeComment = asyncHandler(
+    async (req, res) => {
+        //comment id
+        const {id} = req.params;
+        const exists = await LikeComment.findOne({comment: id});
+        const session = await mongoose.startSession();
+        let action;
+        let updateLike;
+        try{
+            await session.startTransaction();
+            if(exists){
+                updateLike = await Comment.findByIdAndUpdate({ id },{
+                    $inc: { likeCount : -1}
+                }, {session}).select("content");
+                await LikeComment.deleteOne({
+                    user: req.user._id,
+                    comment: id
+                }, {session});
+                action ="added";
+            }
+            else{
+                updateLike = await Comment.findByIdAndUpdate({ id },{
+                    $inc: { likeCount : 1}
+                }, {session}).select("content");
+                await LikeComment.create({
+                    user: req.user._id,
+                    comment: id
+                }, {session})
+                action= "removed";
+            }
+        }
+        catch(error){
+            session.abortTransaction();
+            throw new ApiError(400, "Cannot like comment.")
+        }
+        finally{
+            await session.endSession();
+        }
+        return res.status(200)
+        .json(new ApiResponse(200, updateLike , `like ${action} successfully.`))
+    }
+)
+
+const replyComment = asyncHandler(
+    async (req, res) => {
+        //we need parent id, comment content, postID
+        const {id} = req.params;
+        const {parentId, content} = req.body;
+        const reply = await LikeComment.create({
+            user: req.user._id,
+            post: id
+        })
+        const commentCreated = await Comment.findByIdAndUpdate({
+            post : id,
+            content : content,
+            parent : parentId,
+            createdBy: req.user._id
+        })
+        await Engagement.create({
+            user: req.user._id,
+            post: id,
+            type: "comment"
+        })
+        await Post.findOneAndUpdate({
+            _id: id
+        },{
+            $inc:{commentsCount: 1}
+        })
+        return res.status(201)
+        .json(new ApiResponse(201, "", "Reply comment created."))
+    }
+)
+export {createComment, removeComment, editComment , toggleLikeComment, replyComment};
