@@ -176,4 +176,40 @@ const replyComment = asyncHandler(
         .json(new ApiResponse(201, "", "Reply comment created."))
     }
 )
-export {createComment, removeComment, editComment , toggleLikeComment, replyComment};
+
+const allComments = asyncHandler(
+    async (req,res) => {
+        //postID
+        const { id } = req.params;
+        
+        const comments = await Comment.find({
+            post:id,
+            parent: null
+        }).sort({ createdAt: -1 })
+        .skip(10)
+        .limit(10)
+        .populate("user", "username avatar")
+        .lean();
+        
+        if(!comments){
+            throw new ApiError(400, "No comments made yet.");
+        }
+        return res.status(200)
+        .json(new ApiResponse(200, comments, "Comments fetched successfully."))
+    }
+)
+const getReplies = asyncHandler(
+    async (req, res) => {
+        //comment id
+        const { id } = req.params;
+
+        const replies = await Comment.find({
+            parent: id
+        }).sort({ createdAt: 1 })
+            .populate("user", "username avatar");
+
+        return res.status(200)
+        .json(new ApiResponse(200, replies, "replies fetched succesfully"));
+    }
+);
+export {createComment, removeComment, editComment, toggleLikeComment, replyComment, allComments , getReplies};
