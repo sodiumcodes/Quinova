@@ -77,14 +77,15 @@ const editComment = asyncHandler(
     async (req,res) => {
         //comment id
         const{id} = req.params;
-        const comment = await Comment.findById({_id: id})
+        const comment = await Comment.findOne({post: id})
+
         //! Ownership check
-        if (!comment.user.equals(req.user._id)) {
+        if (!comment.createdBy == req.user._id) {
             throw new ApiError(403, "Unauthorized");
         }
-
         //! Time check (30 minutes)
         const now = new Date();
+        
         const createdTime = new Date(comment.createdAt);
 
         const diffInMs = now - createdTime; //mili seconds -> minutes
@@ -118,6 +119,7 @@ const toggleLikeComment = asyncHandler(
                 updateLike = await Comment.findByIdAndUpdate({ id },{
                     $inc: { likeCount : -1}
                 }, {session}).select("content");
+                
                 await LikeComment.deleteOne({
                     user: req.user._id,
                     comment: id
@@ -128,10 +130,12 @@ const toggleLikeComment = asyncHandler(
                 updateLike = await Comment.findByIdAndUpdate({ id },{
                     $inc: { likeCount : 1}
                 }, {session}).select("content");
+                
                 await LikeComment.create({
                     user: req.user._id,
                     comment: id
                 }, {session})
+                
                 action= "removed";
             }
         }
@@ -158,9 +162,10 @@ const replyComment = asyncHandler(
         })
         const commentCreated = await Comment.findByIdAndUpdate({
             post : id,
-            content : content,
             parent : parentId,
             createdBy: req.user._id
+        }, {
+            content : content,
         })
         await Engagement.create({
             user: req.user._id,
@@ -181,17 +186,19 @@ const allComments = asyncHandler(
     async (req,res) => {
         //postID
         const { id } = req.params;
-        
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
         const comments = await Comment.find({
             post:id,
             parent: null
         }).sort({ createdAt: -1 })
-        .skip(10)
-        .limit(10)
-        .populate("user", "username avatar")
-        .lean();
+        .skip(skip)
+        .limit(limit)
+        .populate("createdBy", "username avatar");
         
-        if(!comments){
+        if(comments.length ==0 ){
             throw new ApiError(400, "No comments made yet.");
         }
         return res.status(200)

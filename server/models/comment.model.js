@@ -27,6 +27,8 @@ const commentSchema = new mongoose.Schema({
         type:Number,
         default: 0,
     }
+}, {
+    timestamps: true
 })
 
 // *Index for fast fetching (post comments sorted by latest)

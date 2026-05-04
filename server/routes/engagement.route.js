@@ -13,8 +13,8 @@ router.route( "/posts/:id/view" ).post( addPostView);
 
 //comments
 router.route("/posts/:id/comment").post(createComment);
-router.route("/posts/:id/like-comment").post(toggleLikeComment);
-router.route("/posts/:id/reply-to-comment").post(replyComment);
+router.route("/posts/:id/like-comment").post(toggleLikeComment); //!
+router.route("/posts/:id/reply-to-comment").post(replyComment);//!
 
 router.route("/posts/:id/get-comments").get(allComments);
 router.route("/posts/:id/get-comment-replies").get(getReplies);
