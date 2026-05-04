@@ -86,7 +86,6 @@ const viewAllPosts = asyncHandler(
     async (req,res) => {
         //user id
         const { username } = req.params;
-        console.log(username);
 
         //find returns as array not object
         // const currUser = await User.find({username})
@@ -114,7 +113,7 @@ const editImages = asyncHandler(
 const editCaption = asyncHandler(
     async (req,res) => {
         //get post id
-        const {id}= req.params
+        const {id}= req.params;
         if(req.body.caption){
             const post = await Post.findById(id);
             post.caption = req.body.caption
@@ -130,7 +129,7 @@ const editTag = asyncHandler(
         const {id}= req.params
         if(req.body.tags){
             const post = await Post.findById(id);
-            post.tags = req.body.tag
+            post.tags.push(req.body.tag)
             post.save({validateBeforeSave : false})
         }
         return res.status(200)

@@ -6,7 +6,7 @@ const router = Router();
 
 router.use(verifyUser);
 //post 
-router.route("/create").post(upload.array("posts", 5), createPost);//working
+router.route("/create").post(upload.array("posts", 5), createPost); 
 router.route("/feature/:id").post(toggleFeature);
 
 //get
@@ -14,9 +14,9 @@ router.route("/single/:id").get(viewPostById);
 router.route("/all/:username").get(viewAllPosts);
 
 //patch
-router.route("/edit-image").patch(editImages)
-router.route("/edit-caption").patch(editCaption)
-router.route("/edit-tag").patch(editTag)
+router.route("/edit-image/:id").patch(editImages) 
+router.route("/edit-caption/:id").patch(editCaption)
+router.route("/edit-tag/:id").patch(editTag)
 
 //delete
 router.route("/delete/:id").delete(deletePost);
