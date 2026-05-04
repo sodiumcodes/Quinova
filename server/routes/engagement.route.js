@@ -7,20 +7,20 @@ const router = Router();
 router.use(verifyUser);
 
 //posts
-router.route( "/posts/:id/like" ).post( toggleLike);
-router.route( "/posts/:id/save" ).post( toggleSave);
-router.route( "/posts/:id/view" ).post( addPostView);
+router.route( "/posts/like/:id" ).post( toggleLike);
+router.route( "/posts/save/:id" ).post( toggleSave);
+router.route( "/posts/view/:id" ).post( addPostView);
 
 //comments
-router.route("/posts/:id/comment").post(createComment);
-router.route("/posts/:id/like-comment").post(toggleLikeComment); //!
-router.route("/posts/:id/reply-to-comment").post(replyComment);//!
+router.route("/posts/comment/:id").post(createComment);
+router.route("/posts/like-comment/:id").post(toggleLikeComment);
+router.route("/posts/reply-to-comment/:id/:parentId").post(replyComment);
 
-router.route("/posts/:id/get-comments").get(allComments);
-router.route("/posts/:id/get-comment-replies").get(getReplies);
+router.route("/posts/get-comments/:id").get(allComments);
+router.route("/posts/get-comment-replies/:id").get(getReplies);
 
-router.route("/posts/:id/edit-comment").patch(editComment);
+router.route("/posts/edit-comment/:id").patch(editComment);
 
-router.route("/posts/:id/remove-comment").delete(removeComment);
+router.route("/posts/remove-comment/:id").delete(removeComment);
 
 export default router;
