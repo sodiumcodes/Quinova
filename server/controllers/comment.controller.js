@@ -23,6 +23,7 @@ const createComment = asyncHandler(
             createdBy: req.user._id,
             content: commentContent
         })
+        
         await Engagement.create({
             user: req.user._id,
             post: id,
@@ -33,10 +34,12 @@ const createComment = asyncHandler(
         },{
             $inc:{commentsCount: 1}
         })
+        
         await LikeComment.create({
             user: req.user._id,
-            comment: comment._id
+            comment: comment._id,
         })
+        
         return res.status(201)
         .json(new ApiResponse(201, comment, "Comment created successfully."))
     }
@@ -46,17 +49,13 @@ const removeComment = asyncHandler(
     async (req,res) => {
         //comment id
         const {idC, idP} = req.params;
-        const comment = await Comment.findByIdAndDelete({
+        await Comment.findByIdAndDelete({
             _id: idC
-        }).select("post")
+        })
         await Comment.deleteMany({
             parent: new mongoose.Types.ObjectId(idC)
         })
-        await Post.findOneAndUpdate({
-            _id: idP
-        },{
-            $inc:{commentsCount: 1}
-        })
+        
         await Engagement.findOneAndDelete({
             post: idC,
             user: req.user._id,
@@ -70,8 +69,14 @@ const removeComment = asyncHandler(
             user: req.user._id,
             comment: idC
         })
-        await LikeComment.deleteMany({
+        const result = await LikeComment.deleteMany({
             parent: idC
+        })
+        const count = result.deletedCount
+        await Post.findOneAndUpdate({
+            _id: idP
+        },{
+            $inc:{commentsCount: -count}
         })
         return res.status(204)
         .json(new ApiResponse(204, "", "Comment deleted successfully."))
@@ -119,7 +124,7 @@ const toggleLikeComment = asyncHandler(
             user: new mongoose.Types.ObjectId(req.user._id),
             comment: new mongoose.Types.ObjectId(id),
         });
-        
+        //* add an if condition and check if this comment: parent===null or not: using that add the parent in LikeComment
         const session = await mongoose.startSession();
         let action;
         let updateLike;
@@ -179,26 +184,31 @@ const replyComment = asyncHandler(
         //we need parent id, comment content, postID
         const {id, parentId,} = req.params;
         const {content} = req.body;
-        await LikeComment.create({
-            user: req.user._id,
-            comment: parentId
-        })
         const commentCreated = await Comment.create({
             post: id,
             parent: parentId,
             content: content,
             createdBy: req.user._id
         });
+        
+        await LikeComment.create({
+            user: req.user._id,
+            comment: parentId,
+            parent: commentCreated.parent
+        })
+        
         await Engagement.create({
             user: req.user._id,
             post: id,
             type: "comment"
         })
+        
         await Post.findOneAndUpdate({
             _id: id
         },{
             $inc:{commentsCount: 1}
         })
+        
         return res.status(201)
         .json(new ApiResponse(201, "", "Reply comment created."))
     }
