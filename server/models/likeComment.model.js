@@ -11,6 +11,13 @@ const likecommentSchema = new mongoose.Schema({
         ref: "Comment",
         required: true,
         index: true
+    },
+    parent:{
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+        required: true,
+        index: true,
+        default: null,
     }
 })
 

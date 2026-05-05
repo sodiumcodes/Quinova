@@ -45,28 +45,33 @@ const createComment = asyncHandler(
 const removeComment = asyncHandler(
     async (req,res) => {
         //comment id
-        const {id} = req.params;
+        const {idC, idP} = req.params;
         const comment = await Comment.findByIdAndDelete({
-            _id: id
+            _id: idC
         }).select("post")
-
+        await Comment.deleteMany({
+            parent: new mongoose.Types.ObjectId(idC)
+        })
         await Post.findOneAndUpdate({
-            _id: id
+            _id: idP
         },{
             $inc:{commentsCount: 1}
         })
         await Engagement.findOneAndDelete({
-            post: comment.post,
+            post: idC,
             user: req.user._id,
         })
         await Post.findOneAndUpdate({
-            _id: id
+            _id: idP
         },{
             $inc:{commentsCount: -1}
         })  
         await LikeComment.deleteOne({
             user: req.user._id,
-            comment: comment._id
+            comment: idC
+        })
+        await LikeComment.deleteMany({
+            parent: idC
         })
         return res.status(204)
         .json(new ApiResponse(204, "", "Comment deleted successfully."))
@@ -104,7 +109,7 @@ const editComment = asyncHandler(
         throw new ApiError(400, "Cannot edit after 30 minutes");
     }
 )
-
+//?update: LikeComment: when you like a reply you need to add the parent also in model
 const toggleLikeComment = asyncHandler(
     async (req, res) => {
         //comment id

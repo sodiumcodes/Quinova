@@ -21,6 +21,6 @@ router.route("/posts/get-comment-replies/:id").get(getReplies);
 
 router.route("/posts/edit-comment/:id").patch(editComment);
 
-router.route("/posts/remove-comment/:id").delete(removeComment);
+router.route("/posts/remove-comment/:idC/:idP").delete(removeComment);
 
 export default router;
