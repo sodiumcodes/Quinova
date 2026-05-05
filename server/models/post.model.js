@@ -76,6 +76,7 @@ postSchema.index({ tags: 1 });
 
 //only lowercase tags allowed
 postSchema.pre("save", function () {
+
     if (this.tags && Array.isArray(this.tags)) {
         this.tags = this.tags
             .flatMap(tag =>
@@ -83,8 +84,10 @@ postSchema.pre("save", function () {
             )//return [elements] in one level (flatens array)
             .filter(tag => tag.length > 0) // remove empty
             .map(tag => tag.toLowerCase().trim()); // normalize
+
+            //removes duplicates
+            this.tags = [...new Set(normalized)];
     }
-    
 });
 
 //to understand map and flat map better

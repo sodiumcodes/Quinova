@@ -5,7 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import Comment from "../models/comment.model.js"
 import Engagement from "../models/engagement.model.js";
 import Post from "../models/post.model.js";
-import LikeComment from "../models/commentLike.model.js";
+import LikeComment from "../models/likeComment.model.js";
 
 const createComment = asyncHandler(
     async (req,res) => {
@@ -23,6 +23,7 @@ const createComment = asyncHandler(
             createdBy: req.user._id,
             content: commentContent
         })
+        
         await Engagement.create({
             user: req.user._id,
             post: id,
@@ -33,10 +34,12 @@ const createComment = asyncHandler(
         },{
             $inc:{commentsCount: 1}
         })
+        
         await LikeComment.create({
             user: req.user._id,
-            comment: comment._id
+            comment: comment._id,
         })
+        
         return res.status(201)
         .json(new ApiResponse(201, comment, "Comment created successfully."))
     }
@@ -45,28 +48,35 @@ const createComment = asyncHandler(
 const removeComment = asyncHandler(
     async (req,res) => {
         //comment id
-        const {id} = req.params;
-        const comment = await Comment.findByIdAndDelete({
-            _id: id
-        }).select("post")
-
-        await Post.findOneAndUpdate({
-            _id: id
-        },{
-            $inc:{commentsCount: 1}
+        const {idC, idP} = req.params;
+        await Comment.findByIdAndDelete({
+            _id: idC
         })
+        await Comment.deleteMany({
+            parent: new mongoose.Types.ObjectId(idC)
+        })
+        
         await Engagement.findOneAndDelete({
-            post: comment.post,
+            post: idC,
             user: req.user._id,
         })
         await Post.findOneAndUpdate({
-            _id: id
+            _id: idP
         },{
             $inc:{commentsCount: -1}
         })  
         await LikeComment.deleteOne({
             user: req.user._id,
-            comment: comment._id
+            comment: idC
+        })
+        const result = await LikeComment.deleteMany({
+            parent: idC
+        })
+        const count = result.deletedCount
+        await Post.findOneAndUpdate({
+            _id: idP
+        },{
+            $inc:{commentsCount: -count}
         })
         return res.status(204)
         .json(new ApiResponse(204, "", "Comment deleted successfully."))
@@ -77,14 +87,15 @@ const editComment = asyncHandler(
     async (req,res) => {
         //comment id
         const{id} = req.params;
-        const comment = await Comment.findById({_id: id})
+        const comment = await Comment.findOne({post: id})
+
         //! Ownership check
-        if (!comment.user.equals(req.user._id)) {
+        if (!comment.createdBy == req.user._id) {
             throw new ApiError(403, "Unauthorized");
         }
-
         //! Time check (30 minutes)
         const now = new Date();
+        
         const createdTime = new Date(comment.createdAt);
 
         const diffInMs = now - createdTime; //mili seconds -> minutes
@@ -103,40 +114,61 @@ const editComment = asyncHandler(
         throw new ApiError(400, "Cannot edit after 30 minutes");
     }
 )
-
+//?update: LikeComment: when you like a reply you need to add the parent also in model
 const toggleLikeComment = asyncHandler(
     async (req, res) => {
         //comment id
         const {id} = req.params;
-        const exists = await LikeComment.findOne({comment: id});
+        
+        const exists = await LikeComment.findOne({
+            user: new mongoose.Types.ObjectId(req.user._id),
+            comment: new mongoose.Types.ObjectId(id),
+        });
+        //* add an if condition and check if this comment: parent===null or not: using that add the parent in LikeComment
         const session = await mongoose.startSession();
         let action;
         let updateLike;
         try{
             await session.startTransaction();
             if(exists){
-                updateLike = await Comment.findByIdAndUpdate({ id },{
-                    $inc: { likeCount : -1}
-                }, {session}).select("content");
-                await LikeComment.deleteOne({
+                const result = await LikeComment.deleteOne({
                     user: req.user._id,
                     comment: id
                 }, {session});
+
+                if (result.deletedCount > 0) {
+                    updateLike = await Comment.findByIdAndUpdate({_id: id },{
+                        $inc: { likeCount : -1}
+                    }, 
+                    {
+                        returnDocument: "after",         // return updated doc
+                        session,
+                        select: "content"
+                    });
+                }
                 action ="added";
             }
             else{
-                updateLike = await Comment.findByIdAndUpdate({ id },{
+                updateLike = await Comment.findByIdAndUpdate({ _id: id },{
                     $inc: { likeCount : 1}
-                }, {session}).select("content");
-                await LikeComment.create({
+                }, {
+                    returnDocument: "after",         // return updated doc
+                    session,
+                    select: "content"   // projection
+                });
+                
+                const likeCommentObject = await LikeComment.create({
                     user: req.user._id,
                     comment: id
-                }, {session})
+                });
+                await likeCommentObject.save({validateBeforeSave: false}, {session});
                 action= "removed";
             }
+            await session.commitTransaction();
         }
         catch(error){
-            session.abortTransaction();
+            await session.abortTransaction();
+            
             throw new ApiError(400, "Cannot like comment.")
         }
         finally{
@@ -150,28 +182,33 @@ const toggleLikeComment = asyncHandler(
 const replyComment = asyncHandler(
     async (req, res) => {
         //we need parent id, comment content, postID
-        const {id} = req.params;
-        const {parentId, content} = req.body;
-        const reply = await LikeComment.create({
-            user: req.user._id,
-            post: id
-        })
-        const commentCreated = await Comment.findByIdAndUpdate({
-            post : id,
-            content : content,
-            parent : parentId,
+        const {id, parentId,} = req.params;
+        const {content} = req.body;
+        const commentCreated = await Comment.create({
+            post: id,
+            parent: parentId,
+            content: content,
             createdBy: req.user._id
+        });
+        
+        await LikeComment.create({
+            user: req.user._id,
+            comment: parentId,
+            parent: commentCreated.parent
         })
+        
         await Engagement.create({
             user: req.user._id,
             post: id,
             type: "comment"
         })
+        
         await Post.findOneAndUpdate({
             _id: id
         },{
             $inc:{commentsCount: 1}
         })
+        
         return res.status(201)
         .json(new ApiResponse(201, "", "Reply comment created."))
     }
@@ -181,17 +218,19 @@ const allComments = asyncHandler(
     async (req,res) => {
         //postID
         const { id } = req.params;
-        
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
         const comments = await Comment.find({
             post:id,
             parent: null
         }).sort({ createdAt: -1 })
-        .skip(10)
-        .limit(10)
-        .populate("user", "username avatar")
-        .lean();
+        .skip(skip)
+        .limit(limit)
+        .populate("createdBy", "username avatar");
         
-        if(!comments){
+        if(comments.length ==0 ){
             throw new ApiError(400, "No comments made yet.");
         }
         return res.status(200)
@@ -206,7 +245,7 @@ const getReplies = asyncHandler(
         const replies = await Comment.find({
             parent: id
         }).sort({ createdAt: 1 })
-            .populate("user", "username avatar");
+            .populate("createdBy", "username avatar");
 
         return res.status(200)
         .json(new ApiResponse(200, replies, "replies fetched succesfully"));

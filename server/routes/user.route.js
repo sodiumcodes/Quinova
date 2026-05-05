@@ -19,7 +19,7 @@ router.route("/update-username").patch( updateUserName ) //ok
 router.route("/:id/follow").post( toggleFollow); 
 
 //get
-router.route("profile/:username").get( getUserProfile );
+router.route("/profile/:username").get( getUserProfile );
 router.route("/:id").get(getFollowersAndFollowing);
 router.route("/:id/followers").get(getFollowersList);
 router.route("/:id/following").get(getFollowingList);

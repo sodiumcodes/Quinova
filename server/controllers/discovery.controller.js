@@ -32,8 +32,8 @@ const getPostByTag = asyncHandler(
 )
 const searchUser = asyncHandler(
     async (req,res) => {
-        const {username, page =1, limit=10} = req.query;
-        username = username.trim().toLowerCase();
+        const {userName, page =1, limit=10} = req.query;
+        const username = userName.trim().toLowerCase();
         let user = req.user;
         if(!username === user.username ){
             user = await User.findOne({username: username});

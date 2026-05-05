@@ -22,6 +22,7 @@ const getUserAnalytics = asyncHandler(
                     totalLikes : { $sum: "likesCount" },
                     totalSaves : { $sum: "savesCount" },
                     totalViews : { $sum: "viewsCount" },
+                    totalComments : { $sum: "commentsCount" },
                 }
             }
         ]) 
@@ -29,9 +30,10 @@ const getUserAnalytics = asyncHandler(
         const stats = allCounts[0] || {
             totalLikes : 0,
             totalSaves : 0,
-            totalViews : 0
+            totalViews : 0,
+            totalComments: 0
         }
-        const engagementRate = (stats.totalViews === 0)? 0 : ((stats.totalLikes + stats.totalSaves) / stats.totalViews) * 100
+        const engagementRate = (stats.totalViews === 0)? 0 : ((stats.totalLikes + stats.totalSaves + stats.commentsCount) / stats.totalViews) * 100
         
         return res.status(200)
         .json(
@@ -54,7 +56,7 @@ const getPostAnalytics = asyncHandler(
             return res.status(404).json({ message: "Post not found" });
         }
        
-        const engagementRate = (post.viewsCount === 0) ? 0 : ((post.likesCount + post.savesCount) / post.viewsCount)*100 ; 
+        const engagementRate = (post.viewsCount === 0) ? 0 : ((post.likesCount + post.savesCount + post.commentsCount) / post.viewsCount)*100 ; 
         await Post.updateOne({
             _id: id
             }, 
@@ -86,10 +88,11 @@ const getTopPosts = asyncHandler(
         }                        
         return res.status(200)
         .json(
-            new ApiResponse(200, Posts, "Top five posts Retrived succefully")
+            new ApiResponse(200, topPosts, "Top five posts Retrived succefully")
         )
     }
 )
+
 const getGrowthAnalytics = asyncHandler(async (req, res) => {
     const userPosts = await Post.find({author: req.user._id}).select("_id");
     if(userPosts.length===0){
@@ -134,7 +137,13 @@ const getGrowthAnalytics = asyncHandler(async (req, res) => {
                     $sum : {
                         $cond: [{ $eq: ["$_id.type", "view"] }, "$count", 0]
                     }
+                },
+                comments : {
+                    $sum : {
+                        $cond:[{$eq: ["$_id.type", "comment"]}, "$count", 0]
+                    }
                 }
+
             }
         },
         { $sort: { _id: 1 } }
