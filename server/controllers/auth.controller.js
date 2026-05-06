@@ -6,9 +6,11 @@ import { verifyRefreshToken } from '../utils/jwt.js';
 
 // Cookie configuration // httpOnly prevents JavaScript from accessing cookies (protects against XSS) 
 // secure ensures cookies are only sent over HTTPS
+const isProduction = process.env.NODE_ENV === 'production';
 const options = {
     httpOnly: true,
-    secure : true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
 }
 const generateAccessAndRefresehTokens= async (userId)=>{
     const user = await User.findOne({ _id: userId });
@@ -80,7 +82,7 @@ const login = asyncHandler(
         .cookie("refreshToken", refreshToken, options)
         // also include token in body so front end can store/use it
         .status(200)
-        .json( new ApiResponse(200, updatedUser,"Login successful."));
+        .json( new ApiResponse(200, { user: updatedUser, accessToken }, "Login successful."));
 })
 const logout = asyncHandler(
     async(req,res)=>{

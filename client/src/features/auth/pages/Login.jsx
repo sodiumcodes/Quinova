@@ -5,6 +5,7 @@ import { useUiStore } from '../../../store/ui.store';
 import { ROUTES } from '../../../constants/routes.constants';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
+import { loginApi } from '../../../api/auth.api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,10 +28,9 @@ const Login = () => {
       setLoading(true);
       const response = await loginApi(formData);
       
-      // The backend returns { data: userObject, success: true }
-      // It sets httpOnly cookies, so we don't get the token in the body.
-      // We will set a dummy token in local storage to keep the auth state working
-      setAuth(response.data, 'cookie-auth-active');
+      // The backend returns { data: { user, accessToken }, success: true }
+      // and also sets httpOnly cookies for browser sessions.
+      setAuth(response.data.user, response.data.accessToken);
       showToast('Welcome back to Quinova!', 'success');
       setLoading(false);
       navigate(ROUTES.DASHBOARD);
