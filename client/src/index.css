@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-quinova-bg: #0B2B26;
+  --color-quinova-main: #163832;
+  --color-quinova-secondary: #235347;
+  --color-quinova-tertiary: #8EB69B;
+}
+
+@layer base {
+  body {
+    @apply antialiased text-gray-100 bg-quinova-bg;
+  }
+}
