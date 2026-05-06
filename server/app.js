@@ -3,6 +3,16 @@ import morgan from 'morgan';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 const app = express();
+
+const defaultOrigins = ['http://localhost:5173', 'https://localhost:5173'];
+const allowedOrigins = [
+    ...defaultOrigins,
+    ...(process.env.CORS_ORIGIN || '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+];
+
 //app.use() -> for middlewares and config 
 /*
     app.use(express.json()) // for parsing application/json
@@ -10,9 +20,16 @@ const app = express();
 */
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials : true
-}))
+    origin(origin, callback) {
+        // Allow non-browser requests (Postman, curl, server-to-server) and configured frontends.
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true
+}));
 
 app.use(express.json({limit: "32kb"}));
 app.use(express.urlencoded({ extended: true }));
