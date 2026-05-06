@@ -2,8 +2,13 @@ import axios from 'axios';
 import { getToken, removeToken } from '../utils/token.utils';
 import { useAuthStore } from '../store/auth.store';
 
+const normalizeBaseURL = (baseURL) => baseURL.replace(/\/$/, '');
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
+  // In local development, keep this relative so Vite can proxy `/api` to the Express server.
+  // In production, set VITE_API_BASE_URL to your deployed backend URL, for example:
+  // https://api.your-domain.com/api/v1
+  baseURL: normalizeBaseURL(import.meta.env.VITE_API_BASE_URL || '/api/v1'),
   headers: {
     'Content-Type': 'application/json',
   },

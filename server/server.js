@@ -9,8 +9,9 @@ const startServer = async ()=>{
     try{
         console.log("Starting Server".blue);
         await Connection();
-        server = app.listen(process.env.PORT, ()=>{
-            console.log("Server is now on.".green);
+        const port = process.env.PORT || 3000;
+        server = app.listen(port, ()=>{
+            console.log(`Server is now on http://localhost:${port}`.green);
         });
     }
     /*

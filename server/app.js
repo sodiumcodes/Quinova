@@ -4,14 +4,14 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 const app = express();
 
+const normalizeOrigin = (origin) => origin.trim().replace(/\/$/, '');
 const defaultOrigins = ['http://localhost:5173', 'https://localhost:5173'];
-const allowedOrigins = [
-    ...defaultOrigins,
-    ...(process.env.CORS_ORIGIN || '')
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter(Boolean),
-];
+const configuredOrigins = [process.env.CORS_ORIGIN, process.env.CORS_ORIGINS]
+    .filter(Boolean)
+    .flatMap((origins) => origins.split(','))
+    .map(normalizeOrigin)
+    .filter(Boolean);
+const allowedOrigins = new Set([...defaultOrigins, ...configuredOrigins]);
 
 //app.use() -> for middlewares and config 
 /*
@@ -21,12 +21,12 @@ const allowedOrigins = [
 
 app.use(cors({
     origin(origin, callback) {
-        // Allow non-browser requests (Postman, curl, server-to-server) and configured frontends.
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow non-browser requests (Postman, curl, Vite proxy, server-to-server) and configured frontends.
+        if (!origin || allowedOrigins.has(normalizeOrigin(origin))) {
             return callback(null, true);
         }
 
-        return callback(new Error(`CORS blocked origin: ${origin}`));
+        return callback(new Error(`CORS blocked origin: ${origin}. Add it to CORS_ORIGIN in the server .env file.`));
     },
     credentials: true
 }));
@@ -35,6 +35,10 @@ app.use(express.json({limit: "32kb"}));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev")); // logs requests
 app.use(cookieParser());
+
+app.get('/api/v1/health', (_, res) => {
+    res.status(200).json({ status: 'ok', message: 'Quinova API is reachable' });
+});
 
 //routes import
 import userRoute from './routes/user.route.js';
