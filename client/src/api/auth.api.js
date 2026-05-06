@@ -20,3 +20,8 @@ export const getMeApi = async () => {
   const response = await axiosInstance.get(API_ENDPOINTS.AUTH.ME);
   return response.data;
 };
+
+export const refreshTokenApi = async () => {
+  const response = await axiosInstance.post(API_ENDPOINTS.AUTH.REFRESH_TOKEN);
+  return response.data;
+};
