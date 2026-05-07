@@ -157,23 +157,20 @@ server/
 ## ✅ Indexing Strategy
 
 ### Post
-
-* `owner + createdAt`
-* `owner + engagementRate`
-* `tags`
+* `{ author: -1, isFeatured: -1, createdAt: -1 }`
+* `{ author: -1, engagementRate: -1 }`
+* `{ tags: 1 }`
 
 ### Follow
-
-* `follower + following (unique)`
+* `{ follower: 1, following: 1 }` (Unique)
 
 ### CollectionItem
-
-* `collection`
-* `collection + post (unique)`
+* `{ collections: 1, post: 1 }` (Unique)
+* Individual indexes on `collections` and `post`
 
 ### Comment
-
-* `post + createdAt`
+* `{ post: 1, parent: 1, createdAt: -1 }`
+* Individual indexes on `post` and `parent`
 
 ---
 
@@ -204,118 +201,119 @@ Instead of expensive queries:
 
 # 🔄 API Overview
 
-## 🔐 Auth
+## 🔐 Auth (`/api/v1/auth`)
 
 ```
-POST /api/v1/auth/register
-POST /api/v1/auth/login
-POST /api/v1/auth/logout
-POST /api/v1/auth/refresh-access-token
-GET  /api/v1/auth/me
-```
-
----
-
-## 👤 User
-
-```
-GET    /api/v1/user/profile
-PATCH  /api/v1/user/update-fullName
-PATCH  /api/v1/user/update-email
-PATCH  /api/v1/user/update-password
-PATCH  /api/v1/user/update-bio
-PATCH  /api/v1/user/update-social-links
+POST   /login                    # User login
+POST   /register                 # User registration
+POST   /logout                   # User logout (Protected)
+POST   /refresh-access-token     # Refresh JWT
+GET    /me                       # Get current user (Protected)
 ```
 
 ---
 
-## 🖼️ Posts
+## 👤 User (`/api/v1/user`)
 
 ```
-POST   /api/v1/posts
-GET    /api/v1/posts
-GET    /api/v1/posts/:id
-DELETE /api/v1/posts/:id
-```
-
----
-
-## ❤️ Engagement
-
-```
-POST /api/v1/posts/:id/like
-POST /api/v1/posts/:id/save
-POST /api/v1/posts/:id/view
+PATCH  /upload-avatar            # Upload profile picture
+PATCH  /update-fullName          # Update display name
+PATCH  /update-email             # Update email address
+PATCH  /update-password          # Update account password
+PATCH  /update-bio               # Update profile bio
+PATCH  /update-socials           # Update social links
+PATCH  /update-username          # Update username
+POST   /:id/follow               # Toggle follow/unfollow
+GET    /profile/:username        # Get public user profile
+GET    /:id                      # Get follower/following counts
+GET    /:id/followers            # List followers
+GET    /:id/following            # List following
 ```
 
 ---
 
-## 💬 Comments
+## 🖼️ Post (`/api/v1/post`)
 
 ```
-POST   /api/v1/posts/:postId/comments
-GET    /api/v1/posts/:postId/comments
-PATCH  /api/v1/comments/:id
-DELETE /api/v1/comments/:id
-POST   /api/v1/comments/:id/like
-GET    /api/v1/comments/:id/replies
-```
-
----
-
-## 📁 Collections
-
-```
-POST   /api/v1/collections
-GET    /api/v1/collections
-DELETE /api/v1/collections/:id
-POST   /api/v1/collections/save/:postId
-POST   /api/v1/collections/:id/posts/:postId
-DELETE /api/v1/collections/:id/posts/:postId
-PATCH  /api/v1/collections/:id/posts/:postId
-GET    /api/v1/collections/:id
+POST   /create                   # Create new post (max 5 images)
+POST   /feature/:id              # Toggle post featured status
+GET    /single/:id               # Get single post details
+GET    /all/:username            # Get all posts by user
+PATCH  /edit-image/:id           # Edit post images
+PATCH  /edit-caption/:id         # Edit post caption
+PATCH  /edit-tag/:id             # Edit post tags
+DELETE /delete/:id               # Delete post
 ```
 
 ---
 
-## 🔍 Discovery
+## ❤️ Engagement (`/api/v1`)
 
 ```
-GET /api/v1/posts?tag=react
-GET /api/v1/posts/explore
-GET /api/v1/tags/trending
-```
-
----
-
-## 📊 Analytics
-
-```
-GET /api/v1/analytics/user
-GET /api/v1/analytics/post/:id
-GET /api/v1/analytics/growth
-GET /api/v1/analytics/top-posts
+POST   /posts/like/:id           # Toggle like on post
+POST   /posts/save/:id           # Toggle save on post
+POST   /posts/view/:id           # Increment post view count
 ```
 
 ---
 
-## 🧑‍💻 Portfolio
+## 💬 Comments (`/api/v1`)
 
 ```
-GET /api/v1/portfolio/:username
+POST   /posts/comment/:id              # Add comment to post
+POST   /posts/like-comment/:id         # Toggle like on comment
+POST   /posts/reply-to-comment/:id/:pId # Reply to a comment
+GET    /posts/get-comments/:id         # Get all comments for a post
+GET    /posts/get-comment-replies/:id  # Get replies for a comment
+PATCH  /posts/edit-comment/:id         # Edit comment content
+DELETE /posts/remove-comment/:idC/:idP # Remove comment
+```
+
+---
+
+## 📁 Collections (`/api/v1/collection`)
+
+```
+POST   /create/:name             # Create new collection
+GET    /all                      # List user collections
+DELETE /delete/:name             # Delete collection by name
+PATCH  /update-name/:id          # Update collection name
+POST   /item/save                # Save post to collection
+GET    /item/all/:name           # Get all items in collection
+PATCH  /item/update-note/:id     # Update personal note on item
+DELETE /item/remove/:id          # Remove item from collection
 ```
 
 ---
 
-## 🔎 Search
+## 🔍 Discovery (`/api/v1/discover`)
 
 ```
-GET /api/v1/search/users?q=
-GET /api/v1/search/posts?q=
-GET /api/v1/search?q=
+GET    /posts?tag=...            # Filter posts by tag
+GET    /users?userName=...              # Search users by username
 ```
 
 ---
+
+## 📊 Analytics (`/api/v1/analytics`)
+
+```
+GET    /user                     # Get overall user analytics
+GET    /post/:id                 # Get specific post analytics
+GET    /topPosts                 # Get user's top performing posts
+GET    /growth                   # Get follower growth stats
+```
+
+---
+
+## 🧑‍💻 Portfolio (`/api/v1/portfolio`)
+
+```
+GET    /:username                # Get public portfolio data
+```
+
+---
+
 
 # ⚙️ Setup & Installation
 
